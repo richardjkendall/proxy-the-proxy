@@ -123,6 +123,20 @@ func RunWpadPac(pac string, ipaddress string) string {
 		return result
 	})
 
+	vm.Set("convert_addr", func(call otto.FunctionCall) otto.Value {
+		ip, _ := call.Argument(0).ToString()
+		ipdecimal := IpToDecimal(ip)
+		result, _ := vm.ToValue(ipdecimal)
+		return result
+	})
+
+	vm.Set("dnsDomainLevels", func(call otto.FunctionCall) otto.Value {
+		dns, _ := call.Argument(0).ToString()
+		levels := len(strings.Split(dns, ".")) - 1
+		result, _ := vm.ToValue(levels)
+		return result
+	})
+
 	_, err := vm.Run(fmt.Sprintf(`
 	%s
 

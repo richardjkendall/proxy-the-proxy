@@ -71,3 +71,17 @@ func TestIsIpNotInRange(t *testing.T) {
 		t.Fatalf("Got true when expected false")
 	}
 }
+
+func TestIpToDecimal(t *testing.T) {
+	ip := IpToDecimal("104.16.41.2")
+	if ip != 1745889538 {
+		t.Fatalf("Expected decimal value of 1745889538 but got value = %v", ip)
+	}
+}
+
+func TestIpToDecimalInvalidIP(t *testing.T) {
+	ip := IpToDecimal("300.16.41.2")
+	if ip != 0 {
+		t.Fatalf("Expected decimal value of 0 but got value = %v", ip)
+	}
+}

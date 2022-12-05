@@ -287,3 +287,63 @@ func TestPacDnsIsInNetInvalidCall2(t *testing.T) {
 		t.Fatalf(`Match came back as true, want false`)
 	}
 }
+
+func TestPacConvertAddr(t *testing.T) {
+	pac := `
+	function FindProxyForURL(url, host) {
+		return convert_addr("104.16.41.2") == 1745889538 ? "true" : "false";
+	}
+	`
+	result := RunWpadPac(pac, "")
+	if result != "true" {
+		t.Fatalf(`Match came back as false, want true`)
+	}
+}
+
+func TestPacConvertAddrInvalidIp(t *testing.T) {
+	pac := `
+	function FindProxyForURL(url, host) {
+		return convert_addr("300.16.41.2") == 0 ? "true" : "false";
+	}
+	`
+	result := RunWpadPac(pac, "")
+	if result != "true" {
+		t.Fatalf(`Match came back as false, want true`)
+	}
+}
+
+func TestPacConvertAddrInvalidCall(t *testing.T) {
+	pac := `
+	function FindProxyForURL(url, host) {
+		return convert_addr() == 0 ? "true" : "false";
+	}
+	`
+	result := RunWpadPac(pac, "")
+	if result != "true" {
+		t.Fatalf(`Match came back as false, want true`)
+	}
+}
+
+func TestPacDnsDomainLevels2(t *testing.T) {
+	pac := `
+	function FindProxyForURL(url, host) {
+		return dnsDomainLevels("test.test.test") == 2 ? "true" : "false";
+	}
+	`
+	result := RunWpadPac(pac, "")
+	if result != "true" {
+		t.Fatalf(`Match came back as false, want true`)
+	}
+}
+
+func TestPacDnsDomainLevels0(t *testing.T) {
+	pac := `
+	function FindProxyForURL(url, host) {
+		return dnsDomainLevels("test") == 0 ? "true" : "false";
+	}
+	`
+	result := RunWpadPac(pac, "")
+	if result != "true" {
+		t.Fatalf(`Match came back as false, want true`)
+	}
+}

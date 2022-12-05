@@ -70,3 +70,19 @@ func IsIpInRange(ip string, pattern string, mask string) (bool, error) {
 	log.Printf("IsIpInRange: IP = %v, IPnet = %v", IPAddress, IPNet)
 	return IPNet.Contains(IPAddress), nil
 }
+
+func IpToDecimal(ip string) int {
+	ipaddr := net.ParseIP(ip).To4()
+	log.Printf("IpToDecimal: IP = %v", ipaddr)
+	if ipaddr != nil {
+		shifted := int(ipaddr[0])<<24 |
+			int(ipaddr[1])<<16 |
+			int(ipaddr[2])<<8 |
+			int(ipaddr[3])
+		log.Printf("IpToDecimal: decimal version = %v", shifted)
+		return shifted
+	} else {
+		log.Printf("IpToDecimal: invalid IP")
+		return 0
+	}
+}

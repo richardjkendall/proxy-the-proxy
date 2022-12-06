@@ -5,8 +5,10 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
-	"path/filepath"
+	"regexp"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/robertkrimen/otto"
 )
@@ -82,10 +84,16 @@ func RunWpadPac(pac string, ipaddress string) string {
 	vm.Set("shExpMatch", func(call otto.FunctionCall) otto.Value {
 		str, _ := call.Argument(0).ToString()
 		shexp, _ := call.Argument(1).ToString()
-		match, err := filepath.Match(shexp, str)
+		log.Printf("shExpMatch: str = %v, shexp = %v", str, shexp)
+		pattern := strings.ReplaceAll(shexp, ".", "\\.")
+		pattern = strings.ReplaceAll(pattern, "*", ".*")
+		pattern = strings.ReplaceAll(pattern, "?", ".")
+		log.Printf("shExpMatch: pattern = ^%v$", pattern)
+		r, err := regexp.Compile("^" + pattern + "$")
 		if err != nil {
-			log.Printf("shExpMatch: error doing match")
+			log.Printf("shExpMatch: error compiling re = %v", err)
 		}
+		match := r.MatchString(str)
 		result, _ := vm.ToValue(match)
 		return result
 	})
@@ -135,6 +143,172 @@ func RunWpadPac(pac string, ipaddress string) string {
 		levels := len(strings.Split(dns, ".")) - 1
 		result, _ := vm.ToValue(levels)
 		return result
+	})
+
+	vm.Set("dateRange", func(call otto.FunctionCall) otto.Value {
+		months := []string{"JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"}
+		argc := len(call.ArgumentList)
+		log.Printf("dateRange: argc = %v", argc)
+		gmt := false
+		if argc < 1 {
+			// no arguments
+			result, _ := vm.ToValue(false)
+			return result
+		}
+		last, _ := call.Argument(argc - 1).ToString()
+		if last == "GMT" {
+			log.Printf("dateRange: should be using GMT/UTC")
+			gmt = true
+			argc--
+		}
+		// case with a single argument (after checking if we have GMT)
+		if argc == 1 {
+			arg0, _ := call.Argument(0).ToString()
+			log.Printf("dateRange: single argument case, arg0 = %v", arg0)
+			a0, err := strconv.Atoi(arg0)
+			if err != nil {
+				// arg0 is not a number
+				// so assume it is a month string
+
+				a0 = indexOf(arg0, months)
+				currentmonth := int(time.Now().Month()) - 1
+				if gmt {
+					currentmonth = int(time.Now().UTC().Month()) - 1
+				}
+				log.Printf("dateRange: assumed to be a month, monthindex = %v, currentmonth = %v", a0, currentmonth)
+				output := a0 == currentmonth
+				result, _ := vm.ToValue(output)
+				return result
+			} else {
+				// arg0 is a number
+				// if it is less than 32 we assume it is a day
+				// otherwise it is a a year
+				if a0 < 32 {
+					currentday := int(time.Now().Day())
+					if gmt {
+						currentday = int(time.Now().UTC().Day())
+					}
+					log.Printf("dateRange: assumed to be a day of the month, day = %v, currentday = %v", a0, currentday)
+					output := a0 == currentday
+					result, _ := vm.ToValue(output)
+					return result
+				} else {
+					currentyear := int(time.Now().Year())
+					if gmt {
+						currentyear = int(time.Now().UTC().Year())
+					}
+					log.Printf("dateRange: assumed to be a year, year = %v, currentyear = %v", a0, currentyear)
+					output := a0 == currentyear
+					result, _ := vm.ToValue(output)
+					return result
+				}
+			}
+		}
+
+		// general case
+		year := int(time.Now().Year())
+		now := time.Now()
+		date1 := time.Date(year, 1, 1, 0, 0, 0, 0, time.Local)
+		date2 := time.Date(year, 12, 31, 23, 59, 59, 999999999, time.Local)
+		adjustmonth := false
+		// look at first group of args
+		// this is for date 1
+		for i := 0; i < (argc >> 1); i++ {
+			arg, _ := call.Argument(i).ToString()
+			a, err := strconv.Atoi(arg)
+			if err != nil {
+				// this is not a number, so assume it is a date string
+				a = indexOf(arg, months) + 1
+				date1 = UpdateMonthOfDate(date1, a)
+			} else {
+				if a < 32 {
+					// this is a day
+					adjustmonth = argc <= 2
+					date1 = UpdateDayOfDate(date1, a)
+				} else {
+					date1 = UpdateYearOfDate(date1, a)
+				}
+			}
+		}
+		// now the second group
+		// this is for date 2
+		for i := (argc >> 1); i < argc; i++ {
+			arg, _ := call.Argument(i).ToString()
+			a, err := strconv.Atoi(arg)
+			if err != nil {
+				// this is not a number, so assume it is a date string
+				a = indexOf(arg, months) + 1
+				date2 = UpdateMonthOfDate(date2, a)
+			} else {
+				if a < 32 {
+					// this is a day
+					adjustmonth = argc <= 2
+					date2 = UpdateDayOfDate(date2, a)
+				} else {
+					date2 = UpdateYearOfDate(date2, a)
+				}
+			}
+		}
+		// adjust month to current month if needed
+		if adjustmonth {
+			date1 = UpdateMonthOfDate(date1, int(now.Month()))
+			date2 = UpdateMonthOfDate(date2, int(now.Month()))
+		}
+		// adjust current time to UTC if needed
+		if gmt {
+			now = now.In(time.UTC)
+		}
+		output := false
+		if DateLTE(date1, date2) {
+			output = DateLTE(date1, now) && DateLTE(now, date2)
+		} else {
+			output = DateGTE(date2, now) || DateGTE(now, date1)
+		}
+		result, _ := vm.ToValue(output)
+		return result
+	})
+
+	vm.Set("weekdayRange", func(call otto.FunctionCall) otto.Value {
+		wdays := []string{"SUN", "MON", "TUE", "WED", "THU", "FRI", "SAT"}
+		if len(call.ArgumentList) == 0 {
+			// no arguments
+			result, _ := vm.ToValue(false)
+			return result
+		}
+		// check if the last argument is 'GMT'
+		wday := 0
+		gmt := false
+		last, _ := call.Argument(len(call.ArgumentList) - 1).ToString()
+		if last == "GMT" {
+			log.Printf("weekdayRange: GMT is true")
+			wday = int(time.Now().UTC().Weekday())
+			gmt = true
+		} else {
+			wday = int(time.Now().Weekday())
+		}
+		log.Printf("weekdayRange: today index = %v", wday)
+		wd1arg, _ := call.Argument(0).ToString()
+		wd2arg, _ := call.Argument(1).ToString()
+		wd1 := indexOf(wd1arg, wdays)
+		log.Printf("weekdayRange: first weekday = %v, index = %v", wd1arg, wd1)
+		wd2 := wd1
+		if len(call.ArgumentList) == 3 || (len(call.ArgumentList) == 2 && !gmt) {
+			wd2 = indexOf(wd2arg, wdays)
+			log.Printf("weekdayRange: got a second weekday = %v, index = %v", wd2arg, wd2)
+		}
+		output := false
+		if wd1 == -1 || wd2 == -1 {
+			output = false
+		} else {
+			if wd1 <= wd2 {
+				output = (wd1 <= wday && wday <= wd2)
+			} else {
+				output = (wd2 >= wday || wday >= wd1)
+			}
+		}
+		result, _ := vm.ToValue(output)
+		return result
+
 	})
 
 	_, err := vm.Run(fmt.Sprintf(`

@@ -30,8 +30,14 @@ func GetWpad() string {
 	return sb
 }
 
-func RunWpadPac(pac string, ipaddress string) string {
+func RunWpadPac(pac string, ipaddress string, url string, host string) string {
 	vm := otto.New()
+
+	log.Printf(`RunWpadPac: ip = %v, url = %v, host = %v`, ipaddress, url, host)
+
+	// set variables
+	vm.Set("INJ_REQ_URL", url)
+	vm.Set("INJ_REQ_HOST", host)
 
 	vm.Set("myIpAddress", func(call otto.FunctionCall) otto.Value {
 		result, _ := vm.ToValue(ipaddress)
@@ -145,6 +151,89 @@ func RunWpadPac(pac string, ipaddress string) string {
 		return result
 	})
 
+	vm.Set("timeRange", func(call otto.FunctionCall) otto.Value {
+		argc := len(call.ArgumentList)
+		log.Printf("timeRange: argc = %v", argc)
+		gmt := false
+		if argc < 1 {
+			// no arguments
+			result, _ := vm.ToValue(false)
+			return result
+		}
+		// handle GMT
+		last, _ := call.Argument(argc - 1).ToString()
+		if last == "GMT" {
+			log.Printf("dateRange: should be using GMT/UTC")
+			gmt = true
+			argc--
+		}
+		currentHour := time.Now().Hour()
+		date1 := time.Now()
+		date2 := time.Now()
+		now := time.Now()
+		if gmt {
+			currentHour = time.Now().UTC().Hour()
+			date1 = date1.In(time.UTC)
+			date2 = date1.In(time.UTC)
+		}
+		if argc == 1 {
+			// single argument, this is an hour
+			arg0, _ := call.Argument(0).ToInteger()
+			log.Printf("dateRange: single argument case, arg0 = %v, currenthour = %v", arg0, currentHour)
+			result, _ := vm.ToValue(arg0 == int64(currentHour))
+			return result
+		}
+		if argc == 2 {
+			// two arguments, assuming also to be hours
+			arg0, _ := call.Argument(0).ToInteger()
+			arg1, _ := call.Argument(1).ToInteger()
+			log.Printf("dateRange: double argument case, arg0 = %v, arg1 = %v, currenthour = %v", arg0, arg1, currentHour)
+			result, _ := vm.ToValue(arg0 <= int64(currentHour) && int64(currentHour) <= arg1)
+			return result
+		}
+		switch argc {
+		case 6:
+			// six arguments so assumed to be hh mm ss, hh mm ss
+			arg2, _ := call.Argument(2).ToInteger()
+			arg5, _ := call.Argument(5).ToInteger()
+			date1 = UpdateSecondsOfTime(date1, int(arg2))
+			date2 = UpdateSecondsOfTime(date2, int(arg5))
+			fallthrough
+		case 4:
+			// four arguments so assumed to be hh mm, hh mm
+			middle := argc >> 1
+			arg0, _ := call.Argument(0).ToInteger()
+			arg1, _ := call.Argument(1).ToInteger()
+			date1 = UpdateHoursOfTime(date1, int(arg0))
+			date1 = UpdateMinutesOfTime(date1, int(arg1))
+			argm, _ := call.Argument(middle).ToInteger()
+			argm1, _ := call.Argument(middle + 1).ToInteger()
+			date2 = UpdateHoursOfTime(date2, int(argm))
+			date2 = UpdateMinutesOfTime(date2, int(argm1))
+			log.Printf("dateRange: four argument case, arg0 = %v, arg1 = %v, arg2 = %v, arg3 = %v", arg0, arg1, argm, argm1)
+			if middle == 2 {
+				date2 = UpdateSecondsOfTime(date2, 59)
+			}
+			break
+		default:
+			err := vm.MakeCustomError("timeRange", "bad number of arguments")
+			return err
+		}
+		if gmt {
+			now = now.In(time.UTC)
+		}
+		log.Printf("timeRange: date1 = %v, date2 = %v, GMT = %v, now = %v", date1, date2, gmt, now)
+		output := false
+		if DateLTE(date1, date2) {
+			log.Printf("timeRange: date1 <= date2, date1 <= now = %v, now <= date2 = %v", DateLTE(date1, now), DateLTE(now, date2))
+			output = DateLTE(date1, now) && DateLTE(now, date2)
+		} else {
+			output = DateGTE(date2, now) || DateGTE(now, date1)
+		}
+		result, _ := vm.ToValue(output)
+		return result
+	})
+
 	vm.Set("dateRange", func(call otto.FunctionCall) otto.Value {
 		months := []string{"JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"}
 		argc := len(call.ArgumentList)
@@ -215,6 +304,7 @@ func RunWpadPac(pac string, ipaddress string) string {
 		// this is for date 1
 		for i := 0; i < (argc >> 1); i++ {
 			arg, _ := call.Argument(i).ToString()
+			log.Printf("dateRange: loop 1, arg = %v, value = %v", i, arg)
 			a, err := strconv.Atoi(arg)
 			if err != nil {
 				// this is not a number, so assume it is a date string
@@ -234,6 +324,7 @@ func RunWpadPac(pac string, ipaddress string) string {
 		// this is for date 2
 		for i := (argc >> 1); i < argc; i++ {
 			arg, _ := call.Argument(i).ToString()
+			log.Printf("dateRange: loop 2, arg = %v, value = %v", i, arg)
 			a, err := strconv.Atoi(arg)
 			if err != nil {
 				// this is not a number, so assume it is a date string
@@ -258,6 +349,7 @@ func RunWpadPac(pac string, ipaddress string) string {
 		if gmt {
 			now = now.In(time.UTC)
 		}
+		log.Printf("dateRange: date1 = %v, date2 = %v, GMT = %v, now = %v", date1, date2, gmt, now)
 		output := false
 		if DateLTE(date1, date2) {
 			output = DateLTE(date1, now) && DateLTE(now, date2)
@@ -314,7 +406,7 @@ func RunWpadPac(pac string, ipaddress string) string {
 	_, err := vm.Run(fmt.Sprintf(`
 	%s
 
-	var output = FindProxyForURL("https://www.google.com", "www.google.com");
+	var output = FindProxyForURL(INJ_REQ_URL, INJ_REQ_HOST);
 
 	`, pac))
 

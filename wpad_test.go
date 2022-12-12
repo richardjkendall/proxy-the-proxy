@@ -17,7 +17,7 @@ func TestPacMyIpAddress(t *testing.T) {
 		return myIpAddress();
 	}
 	`
-	result := RunWpadPac(pac, ip)
+	result := RunWpadPac(pac, ip, "", "")
 	if result != ip {
 		t.Fatalf(`IP came back as %v, want %v`, result, ip)
 	}
@@ -33,7 +33,7 @@ func TestPacIsNotPlainHostName(t *testing.T) {
 		}
 	}
 	`
-	result := RunWpadPac(pac, "")
+	result := RunWpadPac(pac, "", "", "")
 	if result != "false" {
 		t.Fatalf(`Check for isPlainHostName match came back as true, want false`)
 	}
@@ -49,7 +49,7 @@ func TestPacIsPlainHostName(t *testing.T) {
 		}
 	}
 	`
-	result := RunWpadPac(pac, "")
+	result := RunWpadPac(pac, "", "", "")
 	if result != "true" {
 		t.Fatalf(`Check for isPlainHostName match came back as false, want true`)
 	}
@@ -65,7 +65,7 @@ func TestPacIsPlainHostNameInvalidCall(t *testing.T) {
 		}
 	}
 	`
-	result := RunWpadPac(pac, "")
+	result := RunWpadPac(pac, "", "", "")
 	if result != "false" {
 		t.Fatalf(`Check for isPlainHostName match came back as true, want false`)
 	}
@@ -81,7 +81,7 @@ func TestPacDnsDomainIs(t *testing.T) {
 		}
 	}
 	`
-	result := RunWpadPac(pac, "")
+	result := RunWpadPac(pac, "", "", "")
 	if result != "true" {
 		t.Fatalf(`Domain match came back as false, want true`)
 	}
@@ -97,7 +97,7 @@ func TestPacDnsDomainIsNot(t *testing.T) {
 		}
 	}
 	`
-	result := RunWpadPac(pac, "")
+	result := RunWpadPac(pac, "", "", "")
 	if result != "false" {
 		t.Fatalf(`Domain match came back as true, want false`)
 	}
@@ -109,7 +109,7 @@ func TestPacDnsDomainIsInvalidCall(t *testing.T) {
 		return dnsDomainIs() ? "true" : "false";
 	}
 	`
-	result := RunWpadPac(pac, "")
+	result := RunWpadPac(pac, "", "", "")
 	if result != "false" {
 		t.Fatalf(`Domain match came back as true, want false`)
 	}
@@ -125,7 +125,7 @@ func TestPacDnsLocalHostOrDomainIsExact(t *testing.T) {
 		}
 	}
 	`
-	result := RunWpadPac(pac, "")
+	result := RunWpadPac(pac, "", "", "")
 	if result != "true" {
 		t.Fatalf(`Match came back as false, want true`)
 	}
@@ -141,7 +141,7 @@ func TestPacDnsLocalHostOrDomainIsHostMatch(t *testing.T) {
 		}
 	}
 	`
-	result := RunWpadPac(pac, "")
+	result := RunWpadPac(pac, "", "", "")
 	if result != "true" {
 		t.Fatalf(`Match came back as false, want true`)
 	}
@@ -157,7 +157,7 @@ func TestPacDnsLocalHostOrDomainIsDomainMismatch(t *testing.T) {
 		}
 	}
 	`
-	result := RunWpadPac(pac, "")
+	result := RunWpadPac(pac, "", "", "")
 	if result != "false" {
 		t.Fatalf(`Match came back as true, want false`)
 	}
@@ -173,7 +173,7 @@ func TestPacDnsLocalHostOrDomainIsHostMismatch(t *testing.T) {
 		}
 	}
 	`
-	result := RunWpadPac(pac, "")
+	result := RunWpadPac(pac, "", "", "")
 	if result != "false" {
 		t.Fatalf(`Match came back as true, want false`)
 	}
@@ -189,7 +189,7 @@ func TestPacDnsIsResolvable(t *testing.T) {
 		}
 	}
 	`
-	result := RunWpadPac(pac, "")
+	result := RunWpadPac(pac, "", "", "")
 	if result != "true" {
 		t.Fatalf(`Match came back as false, want true`)
 	}
@@ -205,7 +205,7 @@ func TestPacDnsIsNotResolvable(t *testing.T) {
 		}
 	}
 	`
-	result := RunWpadPac(pac, "")
+	result := RunWpadPac(pac, "", "", "")
 	if result != "false" {
 		t.Fatalf(`Match came back as true, want false`)
 	}
@@ -221,7 +221,7 @@ func TestPacDnsIsResolvableInvalidCall(t *testing.T) {
 		}
 	}
 	`
-	result := RunWpadPac(pac, "")
+	result := RunWpadPac(pac, "", "", "")
 	if result != "false" {
 		t.Fatalf(`Match came back as true, want false`)
 	}
@@ -237,7 +237,7 @@ func TestPacDnsIsInNet(t *testing.T) {
 		}
 	}
 	`
-	result := RunWpadPac(pac, "")
+	result := RunWpadPac(pac, "", "", "")
 	if result != "true" {
 		t.Fatalf(`Match came back as false, want true`)
 	}
@@ -253,7 +253,7 @@ func TestPacDnsIsNotInNet(t *testing.T) {
 		}
 	}
 	`
-	result := RunWpadPac(pac, "")
+	result := RunWpadPac(pac, "", "", "")
 	if result != "false" {
 		t.Fatalf(`Match came back as true, want false`)
 	}
@@ -269,7 +269,7 @@ func TestPacDnsIsInNetInvalidCall(t *testing.T) {
 		}
 	}
 	`
-	result := RunWpadPac(pac, "")
+	result := RunWpadPac(pac, "", "", "")
 	if result != "false" {
 		t.Fatalf(`Match came back as true, want false`)
 	}
@@ -285,7 +285,7 @@ func TestPacDnsIsInNetInvalidCall2(t *testing.T) {
 		}
 	}
 	`
-	result := RunWpadPac(pac, "")
+	result := RunWpadPac(pac, "", "", "")
 	if result != "false" {
 		t.Fatalf(`Match came back as true, want false`)
 	}
@@ -297,7 +297,7 @@ func TestPacConvertAddr(t *testing.T) {
 		return convert_addr("104.16.41.2") == 1745889538 ? "true" : "false";
 	}
 	`
-	result := RunWpadPac(pac, "")
+	result := RunWpadPac(pac, "", "", "")
 	if result != "true" {
 		t.Fatalf(`Match came back as false, want true`)
 	}
@@ -309,7 +309,7 @@ func TestPacConvertAddrInvalidIp(t *testing.T) {
 		return convert_addr("300.16.41.2") == 0 ? "true" : "false";
 	}
 	`
-	result := RunWpadPac(pac, "")
+	result := RunWpadPac(pac, "", "", "")
 	if result != "true" {
 		t.Fatalf(`Match came back as false, want true`)
 	}
@@ -321,7 +321,7 @@ func TestPacConvertAddrInvalidCall(t *testing.T) {
 		return convert_addr() == 0 ? "true" : "false";
 	}
 	`
-	result := RunWpadPac(pac, "")
+	result := RunWpadPac(pac, "", "", "")
 	if result != "true" {
 		t.Fatalf(`Match came back as false, want true`)
 	}
@@ -333,7 +333,7 @@ func TestPacDnsDomainLevels2(t *testing.T) {
 		return dnsDomainLevels("test.test.test") == 2 ? "true" : "false";
 	}
 	`
-	result := RunWpadPac(pac, "")
+	result := RunWpadPac(pac, "", "", "")
 	if result != "true" {
 		t.Fatalf(`Match came back as false, want true`)
 	}
@@ -345,7 +345,7 @@ func TestPacDnsDomainLevels0(t *testing.T) {
 		return dnsDomainLevels("test") == 0 ? "true" : "false";
 	}
 	`
-	result := RunWpadPac(pac, "")
+	result := RunWpadPac(pac, "", "", "")
 	if result != "true" {
 		t.Fatalf(`Match came back as false, want true`)
 	}
@@ -357,7 +357,7 @@ func TestPacDnsDomainLevelsInvalidCall(t *testing.T) {
 		return dnsDomainLevels() == 0 ? "true" : "false";
 	}
 	`
-	result := RunWpadPac(pac, "")
+	result := RunWpadPac(pac, "", "", "")
 	if result != "true" {
 		t.Fatalf(`Match came back as false, want true`)
 	}
@@ -369,7 +369,7 @@ func TestPacShExpMatchWildcardTrue(t *testing.T) {
 		return shExpMatch("http://home.netscape.com/people/ari/index.html", "*/ari/*") ? "true" : "false";
 	}
 	`
-	result := RunWpadPac(pac, "")
+	result := RunWpadPac(pac, "", "", "")
 	if result != "true" {
 		t.Fatalf(`Match came back as false, want true`)
 	}
@@ -381,7 +381,7 @@ func TestPacShExpMatchWildcardFalse(t *testing.T) {
 		return shExpMatch("http://home.netscape.com/people/montulli/index.html", "*/ari/*") ? "true" : "false";
 	}
 	`
-	result := RunWpadPac(pac, "")
+	result := RunWpadPac(pac, "", "", "")
 	if result != "false" {
 		t.Fatalf(`Match came back as true, want false`)
 	}
@@ -393,7 +393,7 @@ func TestPacShExpMatchQuestionmarkTrue(t *testing.T) {
 		return shExpMatch("http://home.netscape.com/people/r/index.html", "*/?/*") ? "true" : "false";
 	}
 	`
-	result := RunWpadPac(pac, "")
+	result := RunWpadPac(pac, "", "", "")
 	if result != "true" {
 		t.Fatalf(`Match came back as false, want true`)
 	}
@@ -405,7 +405,7 @@ func TestPacShExpMatchQuestionmarkFalse(t *testing.T) {
 		return shExpMatch("http://home.netscape.com/people/rr/index.html", "*/?/*") ? "true" : "false";
 	}
 	`
-	result := RunWpadPac(pac, "")
+	result := RunWpadPac(pac, "", "", "")
 	if result != "false" {
 		t.Fatalf(`Match came back as true, want false`)
 	}
@@ -417,7 +417,7 @@ func TestPacShExpMatchWithDotTrue(t *testing.T) {
 		return shExpMatch("http://home.netscape.com/people/rr/index.html", "*.html") ? "true" : "false";
 	}
 	`
-	result := RunWpadPac(pac, "")
+	result := RunWpadPac(pac, "", "", "")
 	if result != "true" {
 		t.Fatalf(`Match came back as false, want true`)
 	}
@@ -429,7 +429,7 @@ func TestPacShExpMatchWithDotFalse(t *testing.T) {
 		return shExpMatch("http://home.netscape.com/people/rr/index.html", "*.php") ? "true" : "false";
 	}
 	`
-	result := RunWpadPac(pac, "")
+	result := RunWpadPac(pac, "", "", "")
 	if result != "false" {
 		t.Fatalf(`Match came back as true, want false`)
 	}
@@ -445,7 +445,7 @@ func TestPacWeekdayRangeTodayMatch(t *testing.T) {
 	}
 	`
 
-	result := RunWpadPac(pac, "")
+	result := RunWpadPac(pac, "", "", "")
 	if result != "true" {
 		t.Fatalf(`Match came back as false, want true`)
 	}
@@ -461,7 +461,7 @@ func TestPacWeekdayRangeTomorrow(t *testing.T) {
 	}
 	`
 
-	result := RunWpadPac(pac, "")
+	result := RunWpadPac(pac, "", "", "")
 	if result != "false" {
 		t.Fatalf(`Match came back as true, want false`)
 	}
@@ -477,7 +477,7 @@ func TestPacWeekdayRangeTodayUTCMatch(t *testing.T) {
 	}
 	`
 
-	result := RunWpadPac(pac, "")
+	result := RunWpadPac(pac, "", "", "")
 	if result != "true" {
 		t.Fatalf(`Match came back as false, want true`)
 	}
@@ -494,7 +494,7 @@ func TestPacWeekdayRangeTodayTomorrowMatch(t *testing.T) {
 	}
 	`
 
-	result := RunWpadPac(pac, "")
+	result := RunWpadPac(pac, "", "", "")
 	if result != "true" {
 		t.Fatalf(`Match came back as false, want true`)
 	}
@@ -511,7 +511,7 @@ func TestPacWeekdayRangeTodayTomorrowUTCMatch(t *testing.T) {
 	}
 	`
 
-	result := RunWpadPac(pac, "")
+	result := RunWpadPac(pac, "", "", "")
 	if result != "true" {
 		t.Fatalf(`Match came back as false, want true`)
 	}
@@ -526,7 +526,7 @@ func TestPacDateRangeToday(t *testing.T) {
 	}
 	`
 
-	result := RunWpadPac(pac, "")
+	result := RunWpadPac(pac, "", "", "")
 	if result != "true" {
 		t.Fatalf(`Match came back as false, want true`)
 	}
@@ -541,7 +541,296 @@ func TestPacDateRangeTodayUTC(t *testing.T) {
 	}
 	`
 
-	result := RunWpadPac(pac, "")
+	result := RunWpadPac(pac, "", "", "")
+	if result != "true" {
+		t.Fatalf(`Match came back as false, want true`)
+	}
+}
+
+func TestPacDateRangeCurrentYear(t *testing.T) {
+	pac := `
+	var year = new Date().getFullYear();
+
+	function FindProxyForURL(url, host) {
+		return dateRange(year) ? "true" : "false";
+	}
+	`
+
+	result := RunWpadPac(pac, "", "", "")
+	if result != "true" {
+		t.Fatalf(`Match came back as false, want true`)
+	}
+}
+
+func TestPacDateRangeCurrentMonth(t *testing.T) {
+	pac := `
+	var months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+	var month = months[new Date().getMonth()];
+
+	function FindProxyForURL(url, host) {
+		return dateRange(month) ? "true" : "false";
+	}
+	`
+
+	result := RunWpadPac(pac, "", "", "")
+	if result != "true" {
+		t.Fatalf(`Match came back as false, want true`)
+	}
+}
+
+func TestPacDateRangeDayAndMonth(t *testing.T) {
+	pac := `
+	var today = new Date().getDate();
+	var months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+	var month = months[new Date().getMonth()];
+
+	function FindProxyForURL(url, host) {
+		return dateRange(today, month) ? "true" : "false";
+	}
+	`
+
+	result := RunWpadPac(pac, "", "", "")
+	if result != "true" {
+		t.Fatalf(`Match came back as false, want true`)
+	}
+}
+
+func TestPacDateRangeDayAndMonthGMT(t *testing.T) {
+	pac := `
+	var today = new Date().getUTCDate();
+	var months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+	var month = months[new Date().getUTCMonth()];
+
+	function FindProxyForURL(url, host) {
+		return dateRange(today, month, "GMT") ? "true" : "false";
+	}
+	`
+
+	result := RunWpadPac(pac, "", "", "")
+	if result != "true" {
+		t.Fatalf(`Match came back as false, want true`)
+	}
+}
+
+func TestPacDateRangeMonthRange(t *testing.T) {
+	pac := `
+	var months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+	var month = months[new Date().getMonth()];
+	var nextmonth = months[(new Date().getMonth() + 1) % 12];
+
+	function FindProxyForURL(url, host) {
+		return dateRange(month, nextmonth) ? "true" : "false";
+	}
+	`
+
+	result := RunWpadPac(pac, "", "", "")
+	if result != "true" {
+		t.Fatalf(`Match came back as false, want true`)
+	}
+}
+
+func TestPacDateRangeMonthRangeUTC(t *testing.T) {
+	pac := `
+	var months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+	var month = months[new Date().getUTCMonth()];
+	var nextmonth = months[(new Date().getUTCMonth() + 1) % 12];
+
+	function FindProxyForURL(url, host) {
+		return dateRange(month, nextmonth, "GMT") ? "true" : "false";
+	}
+	`
+
+	result := RunWpadPac(pac, "", "", "")
+	if result != "true" {
+		t.Fatalf(`Match came back as false, want true`)
+	}
+}
+
+func TestPacDateRangeMonthRangeNoMatch(t *testing.T) {
+	pac := `
+	var months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+	var month = months[(new Date().getMonth() + 1) % 12];
+	var nextmonth = months[(new Date().getMonth() + 2) % 12];
+
+	function FindProxyForURL(url, host) {
+		return dateRange(month, nextmonth) ? "true" : "false";
+	}
+	`
+
+	result := RunWpadPac(pac, "", "", "")
+	if result != "false" {
+		t.Fatalf(`Match came back as true, want false`)
+	}
+}
+
+func TestPacDateRangeDayAndMonthRange(t *testing.T) {
+	pac := `
+	var d = new Date();
+	var today = d.getDate();
+	var months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+	var month = months[d.getMonth()];
+
+	var endofrange = new Date(d);
+	endofrange.setDate(endofrange.getDate() + 7);
+
+	function FindProxyForURL(url, host) {
+		return dateRange(today, month, endofrange.getDate(), months[endofrange.getMonth()]) ? "true" : "false";
+	}
+	`
+
+	result := RunWpadPac(pac, "", "", "")
+	if result != "true" {
+		t.Fatalf(`Match came back as false, want true`)
+	}
+}
+
+func TestPacDateRangeDayAndMonthRangeGMT(t *testing.T) {
+	pac := `
+	var d = new Date();
+	var today = d.getUTCDate();
+	var months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+	var month = months[d.getUTCMonth()];
+
+	var endofrange = new Date(d);
+	endofrange.setDate(endofrange.getDate() + 7);
+
+	function FindProxyForURL(url, host) {
+		return dateRange(today, month, endofrange.getUTCDate(), months[endofrange.getUTCMonth()], "GMT") ? "true" : "false";
+	}
+	`
+
+	result := RunWpadPac(pac, "", "", "")
+	if result != "true" {
+		t.Fatalf(`Match came back as false, want true`)
+	}
+}
+
+func TestPacDateRangeDayAndMonthRangeNegative(t *testing.T) {
+	pac := `
+	var d = new Date();
+	d.setDate(d.getDate() + 2);
+	var today = d.getDate();
+	var months = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"];
+	var month = months[d.getMonth()];
+
+	var endofrange = new Date(d);
+	endofrange.setDate(endofrange.getDate() + 7);
+
+	function FindProxyForURL(url, host) {
+		return dateRange(today, month, endofrange.getDate(), months[endofrange.getMonth()]) ? "true" : "false";
+	}
+	`
+
+	result := RunWpadPac(pac, "", "", "")
+	if result != "false" {
+		t.Fatalf(`Match came back as true, want false`)
+	}
+}
+
+func TestPacTimeRangeCurrentHour(t *testing.T) {
+	pac := `
+	var hour = new Date().getHours();
+
+	function FindProxyForURL(url, host) {
+		return timeRange(hour) ? "true" : "false";
+	}
+	`
+
+	result := RunWpadPac(pac, "", "", "")
+	if result != "true" {
+		t.Fatalf(`Match came back as false, want true`)
+	}
+}
+
+func TestPacTimeRangeCurrentHourGMT(t *testing.T) {
+	pac := `
+	var hour = new Date().getUTCHours();
+
+	function FindProxyForURL(url, host) {
+		return timeRange(hour, "GMT") ? "true" : "false";
+	}
+	`
+
+	result := RunWpadPac(pac, "", "", "")
+	if result != "true" {
+		t.Fatalf(`Match came back as false, want true`)
+	}
+}
+
+func TestPacTimeRangeCurrentHourRange(t *testing.T) {
+	pac := `
+	var now = new Date();
+	var hour = now.getHours();
+	var inOneHour = new Date(now);
+	inOneHour.setHours(hour + 1);
+	var nexthour = inOneHour.getHours();
+
+	function FindProxyForURL(url, host) {
+		return timeRange(hour, nexthour) ? "true" : "false";
+	}
+	`
+
+	result := RunWpadPac(pac, "", "", "")
+	if result != "true" {
+		t.Fatalf(`Match came back as false, want true`)
+	}
+}
+
+func TestPacTimeRangeCurrentHourRangeGMT(t *testing.T) {
+	pac := `
+	var now = new Date();
+	var hour = now.getUTCHours();
+	var inOneHour = new Date(now);
+	inOneHour.setHours(now.getHours() + 1);
+	var nexthour = inOneHour.getUTCHours();
+
+	function FindProxyForURL(url, host) {
+		console.log("hour = " + hour);
+		return timeRange(hour, nexthour, "GMT") ? "true" : "false";
+	}
+	`
+
+	result := RunWpadPac(pac, "", "", "")
+	if result != "true" {
+		t.Fatalf(`Match came back as false, want true`)
+	}
+}
+
+func TestPacTimeRangeCurrentHourMinRange(t *testing.T) {
+	pac := `
+	var now = new Date();
+	var hour = now.getHours();
+	var min = now.getMinutes();
+	var in15min = new Date(now);
+	in15min.setMinutes(min + 15);
+
+
+	function FindProxyForURL(url, host) {
+		return timeRange(hour, min, in15min.getHours(), in15min.getMinutes()) ? "true" : "false";
+	}
+	`
+
+	result := RunWpadPac(pac, "", "", "")
+	if result != "true" {
+		t.Fatalf(`Match came back as false, want true`)
+	}
+}
+
+func TestPacTimeRangeCurrentHourMinRangeGMT(t *testing.T) {
+	pac := `
+	var now = new Date();
+	var hour = now.getUTCHours();
+	var min = now.getUTCMinutes();
+	var in15min = new Date(now);
+	in15min.setMinutes(now.getMinutes() + 15);
+
+
+	function FindProxyForURL(url, host) {
+		return timeRange(hour, min, in15min.getUTCHours(), in15min.getUTCMinutes(), "GMT") ? "true" : "false";
+	}
+	`
+
+	result := RunWpadPac(pac, "", "", "")
 	if result != "true" {
 		t.Fatalf(`Match came back as false, want true`)
 	}

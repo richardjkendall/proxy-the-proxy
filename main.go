@@ -16,6 +16,7 @@ func main() {
 	pac := `
 	function FindProxyForURL(url, host) {
 		return "DIRECT";
+		return "127.0.0.1:3128";
 	}
 	`
 

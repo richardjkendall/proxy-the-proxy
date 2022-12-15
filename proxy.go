@@ -13,6 +13,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 )
@@ -55,12 +56,17 @@ func appendHostToXForwardHeader(header http.Header, host string) {
 }
 
 type proxy struct {
-	pac string
-	ip  string
+	Pac      string
+	Ip       string
+	Detected bool
 }
 
-func NewProxy(pac string, ip string) *proxy {
-	return &proxy{pac, ip}
+func (p *proxy) UpdateIp(ip string) {
+	p.Ip = ip
+}
+
+func NewProxy(pac string, ip string, detected bool) *proxy {
+	return &proxy{pac, ip, detected}
 }
 
 func transfer(destination io.WriteCloser, source io.ReadCloser) {
@@ -97,9 +103,12 @@ func (p *proxy) ServeHTTP(wr http.ResponseWriter, req *http.Request) {
 	if req.Method == http.MethodConnect {
 		log.Printf(`ServeHTTP: this is a tunnel request for port = %v`, req.URL.Port())
 
+		result := "DIRECT"
 		expandedUrl := fmt.Sprintf(`https:%v`, req.URL.String())
-		result := RunWpadPac(p.pac, p.ip, expandedUrl, req.Host)
-		log.Printf(`ServeHTTP: tunnel, result from pac script = %v`, result)
+		if p.Detected {
+			result = RunWpadPac(p.Pac, p.Ip, expandedUrl, req.Host)
+			log.Printf(`ServeHTTP: tunnel, result from pac script = %v`, result)
+		}
 
 		endpoint := req.Host
 		var dest_conn *net.Conn
@@ -114,6 +123,7 @@ func (p *proxy) ServeHTTP(wr http.ResponseWriter, req *http.Request) {
 			}
 			dest_conn = &conn
 		} else {
+			log.Printf(`ServeHTTP: going direct for %v`, endpoint)
 			conn, err := net.DialTimeout("tcp", endpoint, 10*time.Second)
 			if err != nil {
 				http.Error(wr, "Upstream connection failed", http.StatusInternalServerError)
@@ -141,11 +151,34 @@ func (p *proxy) ServeHTTP(wr http.ResponseWriter, req *http.Request) {
 
 		if req.URL.Scheme != "http" && req.URL.Scheme != "https" {
 			http.Error(wr, `Protocol scheme not supported`, http.StatusBadRequest)
-			log.Printf(`ServeHTTP: protocal scheme %v is not supported`, req.URL.Scheme)
+			log.Printf(`ServeHTTP: protocol scheme %v is not supported`, req.URL.Scheme)
 			return
 		}
 
-		client := &http.Client{}
+		client := &http.Client{
+			Transport: &http.Transport{
+				Proxy: func(r *http.Request) (*url.URL, error) {
+					result := "DIRECT"
+					if p.Detected {
+						log.Printf(`ServeHTTP: http/https: looking up proxy...`)
+						result := RunWpadPac(p.Pac, p.Ip, r.URL.String(), r.Host)
+						log.Printf(`ServeHTTP: http/https, result from pac script = %v`, result)
+					}
+					if result == "DIRECT" {
+						return nil, nil
+					} else {
+						proxyUrl := fmt.Sprintf(`http://%v`, result)
+						proxy, err := url.Parse(proxyUrl)
+						if err != nil {
+							log.Printf(`ServeHTTP: http/https, got error while parsing proxy URL %v`, err)
+							return nil, err
+						}
+						log.Printf(`ServeHTTP: http/https, using proxy %v`, proxy)
+						return proxy, nil
+					}
+				},
+			},
+		}
 
 		//http://golang.org/src/pkg/net/http/client.go
 		req.RequestURI = ""

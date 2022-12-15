@@ -13,21 +13,23 @@ import (
 	"github.com/robertkrimen/otto"
 )
 
-func GetWpad() string {
+func GetWpad(host string) (string, error) {
 	// get PAC file
-	resp, err := http.Get("http://127.0.0.1/wpad.dat")
+	resp, err := http.Get(fmt.Sprintf("http://%s/wpad.dat", host))
 	if err != nil {
-		log.Fatalln(err)
+		log.Printf(`GetWpad: error on connection: %v`, err)
+		return "", err
 	}
 
 	// read the response
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
-		log.Fatalln(err)
+		log.Printf(`GetWpad: error getting response: %v`, err)
+		return "", err
 	}
 
 	sb := string(body)
-	return sb
+	return sb, nil
 }
 
 func RunWpadPac(pac string, ipaddress string, url string, host string) string {

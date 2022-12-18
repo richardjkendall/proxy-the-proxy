@@ -8,6 +8,21 @@ import (
 	"sync"
 )
 
+const motd string = `
+   ___                       _   _                                      
+  / _ \_ __ _____  ___   _  | |_| |__   ___   _ __  _ __ _____  ___   _ 
+ / /_)/ '__/ _ \ \/ / | | | | __| '_ \ / _ \ | '_ \| '__/ _ \ \/ / | | |
+/ ___/| | | (_) >  <| |_| | | |_| | | |  __/ | |_) | | | (_) >  <| |_| |
+\/    |_|  \___/_/\_\\__, |  \__|_| |_|\___| | .__/|_|  \___/_/\_\\__, |
+                     |___/                   |_|                  |___/ 
+
+By Richard Kendall
+Released under MIT licence
+https://github.com/richardjkendall/proxy-the-proxy
+v%v
+
+`
+
 var global_proxy *proxy
 
 func CreateMgmtServer(port int) *http.Server {
@@ -44,6 +59,11 @@ func CreateMgmtServer(port int) *http.Server {
 		fmt.Fprintf(w, string(b))
 	})
 
+	mux.HandleFunc("/cachestats", func(w http.ResponseWriter, r *http.Request) {
+		log.Printf(`MgmtServer: request for cache stats`)
+
+	})
+
 	server := http.Server{
 		Addr:    fmt.Sprintf(`127.0.0.1:%v`, port),
 		Handler: mux,
@@ -54,11 +74,16 @@ func CreateMgmtServer(port int) *http.Server {
 
 func main() {
 
+	// print the hello messages
+	// second parameter is the app version number
+	fmt.Printf(motd, 0.1)
+
 	// Get my IP address
 	myIpAddress := GetOutboundIP()
 	log.Printf("Proxy: My IP address is %s", myIpAddress)
 
 	// get PAC content
+	// make a call to http://wpad
 	detected := true
 	pac, err := GetWpad("wpad")
 	if err != nil {

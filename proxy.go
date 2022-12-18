@@ -7,6 +7,7 @@ package main
 
 import (
 	"bufio"
+	"crypto/sha1"
 	"errors"
 	"fmt"
 	"io"
@@ -59,6 +60,7 @@ type proxy struct {
 	Pac      string
 	Ip       string
 	Detected bool
+	cache    *cache
 }
 
 func (p *proxy) UpdateIp(ip string) {
@@ -66,7 +68,8 @@ func (p *proxy) UpdateIp(ip string) {
 }
 
 func NewProxy(pac string, ip string, detected bool) *proxy {
-	return &proxy{pac, ip, detected}
+	c := NewCache()
+	return &proxy{pac, ip, detected, c}
 }
 
 func transfer(destination io.WriteCloser, source io.ReadCloser) {
@@ -97,6 +100,63 @@ func ConnectUpstream(endpoint string, host string) (net.Conn, error) {
 	return nil, errors.New("ConnectUpstream: did not get 200 okay")
 }
 
+func GetProxyAddress(result string) (string, error) {
+	// split string
+	proxies := strings.Split(result, ";")
+	if proxies[0] == "DIRECT" {
+		return "DIRECT", nil
+	} else if strings.HasPrefix(proxies[0], "PROXY") {
+		bits := strings.Split(proxies[0], " ")
+		if len(bits) > 1 {
+			return bits[1], nil
+		}
+	}
+	return "", errors.New(fmt.Sprintf("Could not find valid proxy address in %v", result))
+}
+
+func GetUrlHash(url string, ip string) []byte {
+	hasher := sha1.New()
+	hasher.Write([]byte(ip))
+	hasher.Write([]byte(url))
+	return hasher.Sum(nil)
+}
+
+func (p *proxy) LookupProxy(url url.URL) string {
+	result := "DIRECT"
+	log.Printf(`LookupProxy: looking up proxy for %v`, url.String())
+	urlString := url.String()
+	host, port, err := net.SplitHostPort(url.Host)
+	if err != nil {
+		log.Printf(`LookupProxy: error getting host and port from URL so will go with value from URL, %v`, err)
+		host = url.Host
+		port = "80"
+	}
+	if !strings.HasPrefix(urlString, "http") {
+		if port == "443" {
+			urlString = fmt.Sprintf(`https:%v`, urlString)
+		} else {
+			urlString = fmt.Sprintf(`http:%v`, urlString)
+		}
+		log.Printf(`LookupProxy: expanding URL as it was missing the scheme, expanded URL = %v`, urlString)
+	}
+	urlhash := GetUrlHash(urlString, p.Ip)
+	cacheValue, err := p.cache.CheckForVal(urlhash)
+	if err == nil {
+		log.Printf(`LookupProxy: got value from cache = %v`, cacheValue)
+		return string(cacheValue)
+	}
+	result = RunWpadPac(p.Pac, p.Ip, urlString, host)
+	proxyaddress, err := GetProxyAddress(result)
+	if err != nil {
+		log.Printf(`LookupProxy: see above, error getting proxy address, will go direct`)
+		return "DIRECT"
+	} else {
+		log.Printf(`LookupProxy: returning %v`, proxyaddress)
+		p.cache.AddVal(urlhash, []byte(proxyaddress))
+		return proxyaddress
+	}
+}
+
 func (p *proxy) ServeHTTP(wr http.ResponseWriter, req *http.Request) {
 	log.Printf(`ServeHTTP: %v from %v for %v`, req.Method, req.RemoteAddr, req.URL)
 
@@ -104,10 +164,9 @@ func (p *proxy) ServeHTTP(wr http.ResponseWriter, req *http.Request) {
 		log.Printf(`ServeHTTP: this is a tunnel request for port = %v`, req.URL.Port())
 
 		result := "DIRECT"
-		expandedUrl := fmt.Sprintf(`https:%v`, req.URL.String())
 		if p.Detected {
-			result = RunWpadPac(p.Pac, p.Ip, expandedUrl, req.Host)
-			log.Printf(`ServeHTTP: tunnel, result from pac script = %v`, result)
+			log.Printf(`ServeHTTP: tunnel: looking up proxy...`)
+			result = p.LookupProxy(*req.URL)
 		}
 
 		endpoint := req.Host
@@ -142,9 +201,10 @@ func (p *proxy) ServeHTTP(wr http.ResponseWriter, req *http.Request) {
 		}
 		client_conn, _, err := hijacker.Hijack()
 		if err != nil {
-			log.Printf(`ServeHTTP: tunnel, Error after connection hijack: %v`, err)
+			log.Printf(`ServeHTTP: Error after connection hijack: %v`, err)
 			http.Error(wr, err.Error(), http.StatusServiceUnavailable)
 		}
+		// wire together the connections
 		go transfer(*dest_conn, client_conn)
 		go transfer(client_conn, *dest_conn)
 	} else {
@@ -160,9 +220,9 @@ func (p *proxy) ServeHTTP(wr http.ResponseWriter, req *http.Request) {
 				Proxy: func(r *http.Request) (*url.URL, error) {
 					result := "DIRECT"
 					if p.Detected {
-						log.Printf(`ServeHTTP: http/https: looking up proxy...`)
-						result := RunWpadPac(p.Pac, p.Ip, r.URL.String(), r.Host)
-						log.Printf(`ServeHTTP: http/https, result from pac script = %v`, result)
+						log.Printf(`ServeHTTP: looking up proxy...`)
+						result = p.LookupProxy(*r.URL)
+
 					}
 					if result == "DIRECT" {
 						return nil, nil
@@ -170,10 +230,10 @@ func (p *proxy) ServeHTTP(wr http.ResponseWriter, req *http.Request) {
 						proxyUrl := fmt.Sprintf(`http://%v`, result)
 						proxy, err := url.Parse(proxyUrl)
 						if err != nil {
-							log.Printf(`ServeHTTP: http/https, got error while parsing proxy URL %v`, err)
+							log.Printf(`ServeHTTP: got error while parsing proxy URL %v`, err)
 							return nil, err
 						}
-						log.Printf(`ServeHTTP: http/https, using proxy %v`, proxy)
+						log.Printf(`ServeHTTP: using proxy %v`, proxy)
 						return proxy, nil
 					}
 				},
@@ -192,7 +252,7 @@ func (p *proxy) ServeHTTP(wr http.ResponseWriter, req *http.Request) {
 		resp, err := client.Do(req)
 		if err != nil {
 			http.Error(wr, "Server Error", http.StatusInternalServerError)
-			log.Fatal("ServeHTTP:", err)
+			//log.Fatal("ServeHTTP:", err)
 		}
 		defer resp.Body.Close()
 

@@ -6,6 +6,9 @@ import (
 	"log"
 	"net/http"
 	"sync"
+
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
 const motd string = `
@@ -59,10 +62,7 @@ func CreateMgmtServer(port int) *http.Server {
 		fmt.Fprintf(w, string(b))
 	})
 
-	mux.HandleFunc("/cachestats", func(w http.ResponseWriter, r *http.Request) {
-		log.Printf(`MgmtServer: request for cache stats`)
-
-	})
+	mux.Handle("/metrics", promhttp.Handler())
 
 	server := http.Server{
 		Addr:    fmt.Sprintf(`127.0.0.1:%v`, port),
@@ -73,6 +73,8 @@ func CreateMgmtServer(port int) *http.Server {
 }
 
 func main() {
+
+	prometheus.MustRegister(wpadExecTimeHistogram)
 
 	// print the hello messages
 	// second parameter is the app version number

@@ -10,7 +10,21 @@ import (
 	"strings"
 	"time"
 
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
 	"github.com/robertkrimen/otto"
+)
+
+var (
+	scriptExecutions = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "proxy_wpad_script_executions",
+		Help: "Total times a WPAD script has been executed",
+	})
+	wpadExecTimeHistogram = prometheus.NewHistogram(prometheus.HistogramOpts{
+		Name:    "proxy_wpad_exec_seconds",
+		Help:    "Histogram of WPAD script execution times in seconds",
+		Buckets: []float64{.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10},
+	})
 )
 
 func GetWpad(host string) (string, error) {
@@ -33,6 +47,7 @@ func GetWpad(host string) (string, error) {
 }
 
 func RunWpadPac(pac string, ipaddress string, url string, host string) string {
+	scriptExecutions.Inc()
 	vm := otto.New()
 
 	log.Printf(`RunWpadPac: ip = %v, url = %v, host = %v`, ipaddress, url, host)
@@ -405,12 +420,15 @@ func RunWpadPac(pac string, ipaddress string, url string, host string) string {
 
 	})
 
+	start := time.Now()
 	_, err := vm.Run(fmt.Sprintf(`
 	%s
 
 	var output = FindProxyForURL(INJ_REQ_URL, INJ_REQ_HOST);
 
 	`, pac))
+	duration := time.Since(start)
+	wpadExecTimeHistogram.Observe(duration.Seconds())
 
 	if err != nil {
 		log.Fatalln(err)

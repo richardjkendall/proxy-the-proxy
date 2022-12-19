@@ -17,6 +17,17 @@ import (
 	"net/url"
 	"strings"
 	"time"
+
+	"github.com/prometheus/client_golang/prometheus"
+	"github.com/prometheus/client_golang/prometheus/promauto"
+)
+
+// metrics
+var (
+	totalRequests = promauto.NewCounter(prometheus.CounterOpts{
+		Name: "proxy_total_requests",
+		Help: "Total requests which have hit the proxy",
+	})
 )
 
 // Hop-by-hop headers. These are removed when sent to the backend.
@@ -159,6 +170,7 @@ func (p *proxy) LookupProxy(url url.URL) string {
 
 func (p *proxy) ServeHTTP(wr http.ResponseWriter, req *http.Request) {
 	log.Printf(`ServeHTTP: %v from %v for %v`, req.Method, req.RemoteAddr, req.URL)
+	totalRequests.Inc()
 
 	if req.Method == http.MethodConnect {
 		log.Printf(`ServeHTTP: this is a tunnel request for port = %v`, req.URL.Port())

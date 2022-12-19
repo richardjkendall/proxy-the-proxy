@@ -56,3 +56,22 @@ func (c *cache) CheckForVal(key []byte) (string, error) {
 	}
 	return string(itemCopy), nil
 }
+
+func (c *cache) GetCacheSize() (int, error) {
+	log.Printf(`GetCacheSize: getting cache size`)
+	var count = 0
+	err := c.db.View(func(txn *badger.Txn) error {
+		opts := badger.DefaultIteratorOptions
+		opts.PrefetchValues = false
+		it := txn.NewIterator(opts)
+		defer it.Close()
+		for it.Rewind(); it.Valid(); it.Next() {
+			count++
+		}
+		return nil
+	})
+	if err != nil {
+		return 0, err
+	}
+	return count, nil
+}

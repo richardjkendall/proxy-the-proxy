@@ -15,6 +15,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"regexp"
 	"strings"
 	"time"
 
@@ -27,6 +28,18 @@ var (
 	totalRequests = promauto.NewCounter(prometheus.CounterOpts{
 		Name: "proxy_total_requests",
 		Help: "Total requests which have hit the proxy",
+	})
+
+	proxyUpstreamTunnelConnect = promauto.NewHistogramVec(prometheus.HistogramOpts{
+		Name:    "proxy_upstream_tunnel_connect_seconds",
+		Help:    "Histogram of upstream tunnel connect in seconds",
+		Buckets: []float64{.005, .01, .025, .05, .1, .25, .5, 1, 2},
+	}, []string{"status_code"})
+
+	proxyServeTimeHistogram = promauto.NewHistogram(prometheus.HistogramOpts{
+		Name:    "proxy_serve_time_seconds",
+		Help:    "Histogram of the time taken to serve proxy requests",
+		Buckets: []float64{.005, .01, .025, .05, .1, .25, .5, 1, 2},
 	})
 )
 
@@ -89,7 +102,19 @@ func transfer(destination io.WriteCloser, source io.ReadCloser) {
 	io.Copy(destination, source)
 }
 
+func GetUpstreamStatus(status string) (bool, string, string) {
+	e := `HTTP\/1.\d (\d+) (.*)`
+	r := regexp.MustCompile(e)
+	result := r.FindAllStringSubmatch(status, -1)
+	if result == nil {
+		return false, "", ""
+	} else {
+		return true, result[0][1], result[0][2]
+	}
+}
+
 func ConnectUpstream(endpoint string, host string) (net.Conn, error) {
+	start := time.Now()
 	log.Printf(`ConnectUpstream: connecting to %v for host %v`, endpoint, host)
 	conn, err := net.DialTimeout("tcp", endpoint, 10*time.Second)
 	if err != nil {
@@ -99,16 +124,24 @@ func ConnectUpstream(endpoint string, host string) (net.Conn, error) {
 	connectString := fmt.Sprintf("CONNECT %s HTTP/1.1\r\n\r\n", host)
 	fmt.Fprintf(conn, connectString)
 	status, err := bufio.NewReader(conn).ReadString('\n')
-	if err != nil {
-		log.Printf(`ConnectUpstream: error getting status from upstream: %v`, err)
-		return nil, err
+	okay, code, message := GetUpstreamStatus(status)
+	if !okay {
+		log.Printf(`ConnectUpstream: did not understand upstream response which was = %v`, status)
+		return nil, errors.New("ConnectUpstream: did not get 2xx okay")
+	} else {
+		duration := time.Since(start)
+		proxyUpstreamTunnelConnect.WithLabelValues(code).Observe(duration.Seconds())
+		if err != nil {
+			log.Printf(`ConnectUpstream: error getting status from upstream: %v`, err)
+			return nil, err
+		}
+		if strings.HasPrefix(code, "2") {
+			log.Printf(`ConnectUpstream: got 2xx OK from upstream`)
+			return conn, nil
+		}
+		log.Printf(`ConnectUpstream: did not get 2xx OK, instead got = %v, %v`, code, message)
+		return nil, errors.New("ConnectUpstream: did not get 200 okay")
 	}
-	if strings.Contains(status, "200") {
-		log.Printf(`ConnectUpstream: got 200 OK from upstream`)
-		return conn, nil
-	}
-	log.Printf(`ConnectUpstream: did not get 200 OK, instead got = %v`, status)
-	return nil, errors.New("ConnectUpstream: did not get 200 okay")
 }
 
 func GetProxyAddress(result string) (string, error) {
@@ -169,6 +202,7 @@ func (p *proxy) LookupProxy(url url.URL) string {
 }
 
 func (p *proxy) ServeHTTP(wr http.ResponseWriter, req *http.Request) {
+	start := time.Now()
 	log.Printf(`ServeHTTP: %v from %v for %v`, req.Method, req.RemoteAddr, req.URL)
 	totalRequests.Inc()
 
@@ -276,4 +310,6 @@ func (p *proxy) ServeHTTP(wr http.ResponseWriter, req *http.Request) {
 		wr.WriteHeader(resp.StatusCode)
 		io.Copy(wr, resp.Body)
 	}
+	duration := time.Since(start)
+	proxyServeTimeHistogram.Observe(duration.Seconds())
 }

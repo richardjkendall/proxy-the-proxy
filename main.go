@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"sync"
 
-	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 
@@ -74,7 +73,10 @@ func CreateMgmtServer(port int) *http.Server {
 
 func main() {
 
-	prometheus.MustRegister(wpadExecTimeHistogram)
+	// register the metrics
+	//prometheus.MustRegister(wpadExecTimeHistogram)
+	//prometheus.MustRegister(proxyUpstreamTunnelConnect)
+	//prometheus.MustRegister(proxyServeTimeHistogram)
 
 	// print the hello messages
 	// second parameter is the app version number

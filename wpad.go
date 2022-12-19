@@ -20,10 +20,10 @@ var (
 		Name: "proxy_wpad_script_executions",
 		Help: "Total times a WPAD script has been executed",
 	})
-	wpadExecTimeHistogram = prometheus.NewHistogram(prometheus.HistogramOpts{
+	wpadExecTimeHistogram = promauto.NewHistogram(prometheus.HistogramOpts{
 		Name:    "proxy_wpad_exec_seconds",
 		Help:    "Histogram of WPAD script execution times in seconds",
-		Buckets: []float64{.005, .01, .025, .05, .1, .25, .5, 1, 2.5, 5, 10},
+		Buckets: []float64{.005, .01, .025, .05, .1, .25, .5, 1, 2},
 	})
 )
 

@@ -73,11 +73,6 @@ func CreateMgmtServer(port int) *http.Server {
 
 func main() {
 
-	// register the metrics
-	//prometheus.MustRegister(wpadExecTimeHistogram)
-	//prometheus.MustRegister(proxyUpstreamTunnelConnect)
-	//prometheus.MustRegister(proxyServeTimeHistogram)
-
 	// print the hello messages
 	// second parameter is the app version number
 	fmt.Printf(motd, 0.1)

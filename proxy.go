@@ -36,11 +36,11 @@ var (
 		Buckets: []float64{.005, .01, .025, .05, .1, .25, .5, 1, 2},
 	}, []string{"status_code"})
 
-	proxyServeTimeHistogram = promauto.NewHistogram(prometheus.HistogramOpts{
+	proxyServeTimeHistogram = promauto.NewHistogramVec(prometheus.HistogramOpts{
 		Name:    "proxy_serve_time_seconds",
 		Help:    "Histogram of the time taken to serve proxy requests",
 		Buckets: []float64{.005, .01, .025, .05, .1, .25, .5, 1, 2},
-	})
+	}, []string{"proxy"})
 )
 
 // Hop-by-hop headers. These are removed when sent to the backend.
@@ -206,6 +206,8 @@ func (p *proxy) ServeHTTP(wr http.ResponseWriter, req *http.Request) {
 	log.Printf(`ServeHTTP: %v from %v for %v`, req.Method, req.RemoteAddr, req.URL)
 	totalRequests.Inc()
 
+	target := "DIRECT"
+
 	if req.Method == http.MethodConnect {
 		log.Printf(`ServeHTTP: this is a tunnel request for port = %v`, req.URL.Port())
 
@@ -214,6 +216,7 @@ func (p *proxy) ServeHTTP(wr http.ResponseWriter, req *http.Request) {
 			log.Printf(`ServeHTTP: tunnel: looking up proxy...`)
 			result = p.LookupProxy(*req.URL)
 		}
+		target = result
 
 		endpoint := req.Host
 		var dest_conn *net.Conn
@@ -268,8 +271,8 @@ func (p *proxy) ServeHTTP(wr http.ResponseWriter, req *http.Request) {
 					if p.Detected {
 						log.Printf(`ServeHTTP: looking up proxy...`)
 						result = p.LookupProxy(*r.URL)
-
 					}
+					target = result
 					if result == "DIRECT" {
 						return nil, nil
 					} else {
@@ -284,6 +287,9 @@ func (p *proxy) ServeHTTP(wr http.ResponseWriter, req *http.Request) {
 					}
 				},
 			},
+			CheckRedirect: func(req *http.Request, via []*http.Request) error {
+				return http.ErrUseLastResponse
+			},
 		}
 
 		//http://golang.org/src/pkg/net/http/client.go
@@ -291,9 +297,9 @@ func (p *proxy) ServeHTTP(wr http.ResponseWriter, req *http.Request) {
 
 		delHopHeaders(req.Header)
 
-		if clientIP, _, err := net.SplitHostPort(req.RemoteAddr); err == nil {
+		/*if clientIP, _, err := net.SplitHostPort(req.RemoteAddr); err == nil {
 			appendHostToXForwardHeader(req.Header, clientIP)
-		}
+		}*/
 
 		resp, err := client.Do(req)
 		if err != nil {
@@ -311,5 +317,5 @@ func (p *proxy) ServeHTTP(wr http.ResponseWriter, req *http.Request) {
 		io.Copy(wr, resp.Body)
 	}
 	duration := time.Since(start)
-	proxyServeTimeHistogram.Observe(duration.Seconds())
+	proxyServeTimeHistogram.WithLabelValues(target).Observe(duration.Seconds())
 }

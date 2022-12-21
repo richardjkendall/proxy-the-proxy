@@ -1,0 +1,32 @@
+# .github/workflows/release.yaml
+
+on: 
+  release:
+    types: [created]
+
+jobs:
+  
+   build:
+    name: build_to_release
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        goos: [linux, darwin, windows]
+        goarch: [amd64]
+        
+    steps:
+    - name: Check out code into the Go module directory
+      uses: actions/checkout@v2
+
+    #- name: add release name into config.go
+    #  env:
+    #    REL: ${{ github.event.release.tag_name }}
+    #  run: |
+    #    sed -i\.bak "s/\${version}/$REL/" config.go
+  
+    - name: Build
+      uses: wangyoucao577/go-release-action@v1.33
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        goos: ${{ matrix.goos }}
+        goarch: ${{ matrix.goarch }}

@@ -91,6 +91,11 @@ func (p *proxy) UpdateIp(ip string) {
 	p.Ip = ip
 }
 
+func (p *proxy) UpdatePac(pac string, detected bool) {
+	p.Pac = pac
+	p.Detected = detected
+}
+
 func NewProxy(pac string, ip string, detected bool) *proxy {
 	c := NewCache()
 	return &proxy{pac, ip, detected, c}

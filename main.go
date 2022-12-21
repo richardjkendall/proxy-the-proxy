@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
 	"fmt"
 	"log"
 	"net/http"
@@ -52,6 +53,17 @@ func CreateMgmtServer(port int) *http.Server {
 		log.Printf("MgmtServer: Refresh, My IP address is %s", myIpAddress)
 		global_proxy.UpdateIp(myIpAddress.String())
 		log.Printf("MgmtServer: Refresh, updated IP address")
+
+		detected := true
+		pac, err := GetWpad("wpad")
+		if err != nil {
+			log.Printf(`MgmtServer: error getting wpad = %v`, err)
+			log.Printf(`MgmtServer: all connections will be direct`)
+			detected = false
+		}
+		global_proxy.UpdatePac(pac, detected)
+		log.Printf("MgmtServer: Refresh, updated PAC details")
+
 		res := &resp{"ok", "refreshed"}
 		b, err := json.Marshal(res)
 		if err != nil {
@@ -72,10 +84,16 @@ func CreateMgmtServer(port int) *http.Server {
 }
 
 func main() {
+	// parameters
+	proxyPort := flag.Int("proxy", 8080, "Port on which to run the proxy server")
+	mgmtPort := flag.Int("mgmt", 9001, "Port on which to run the management server")
 
 	// print the hello messages
 	// second parameter is the app version number
 	fmt.Printf(motd, 0.1)
+
+	// parse parameters
+	flag.Parse()
 
 	// Get my IP address
 	myIpAddress := GetOutboundIP()
@@ -99,16 +117,16 @@ func main() {
 
 	// mgmt server
 	go func() {
-		log.Printf(`Proxy: spawn mgmt server`)
-		server := CreateMgmtServer(9001)
+		log.Printf(`Proxy: spawn mgmt server, port = %d`, *mgmtPort)
+		server := CreateMgmtServer(*mgmtPort)
 		server.ListenAndServe()
 		wg.Done()
 	}()
 
 	// proxy
 	go func() {
-		log.Printf(`Proxy: spawn proxy server`)
-		addr := "127.0.0.1:8080"
+		log.Printf(`Proxy: spawn proxy server, port = %d`, *proxyPort)
+		addr := fmt.Sprintf("127.0.0.1:%d", *proxyPort)
 		if err := http.ListenAndServe(addr, global_proxy); err != nil {
 			log.Fatalln("ListenAndServe", err)
 		}

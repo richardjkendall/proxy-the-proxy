@@ -35,6 +35,11 @@ Requests sent to the proxy port will then be proxied to their destination, via t
 
 You can change the ports which the tool listens on using command line parameters.  
 
+| Parameter | Default | Use | 
+| --- | --- | --- |
+| `-proxy` | 8080 | Sets the TCP port the proxy listens on |
+| `-mgmt` | 9001 | Sets the TCP port the management server listens on |
+
 ## Management server
 
 The management server offers the following endpoints.

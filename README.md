@@ -31,6 +31,10 @@ On startup it checks to see if a proxy can be discovered via the default outboun
 
 Requests sent to the proxy port will then be proxied to their destination, via the intermediate proxy if one is discovered.
 
+Set your `HTTP_PROXY` and `HTTPS_PROXY` environment variables to point to `http://127.0.0.1:8080` (or another port if you changed it) and your internet access from the command line should work.
+
+A call to `http://localhost:9001/refresh` will update the server if your network changes.
+
 ### Changing default ports
 
 You can change the ports which the tool listens on using command line parameters.  

@@ -35,6 +35,13 @@ Set your `HTTP_PROXY` and `HTTPS_PROXY` environment variables to point to `http:
 
 A call to `http://localhost:9001/refresh` will update the server if your network changes.
 
+## Using this software
+
+1. Clone the repo and build `go build`
+2. OR download one of the pre-build releases
+3. Run `./proxy-the-proxy` (see below for changing the ports)
+4. Set your environment variables `HTTP_PROXY` and `HTTPS_PROXY` to point to the proxy endpoint (default is `http://127.0.0.1:8080`)
+
 ### Changing default ports
 
 You can change the ports which the tool listens on using command line parameters.  

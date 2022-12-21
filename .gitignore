@@ -2,3 +2,4 @@ Dockerfile
 notes.md
 wpad.dat
 proxy-the-proxy
+monitoring/**

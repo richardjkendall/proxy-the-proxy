@@ -30,9 +30,20 @@ var (
 		Help: "Total requests which have hit the proxy",
 	})
 
+	totalBytes = promauto.NewGauge(prometheus.GaugeOpts{
+		Name: "proxy_total_bytes_served",
+		Help: "Total bytes passed through the proxy",
+	})
+
 	proxyUpstreamTunnelConnect = promauto.NewHistogramVec(prometheus.HistogramOpts{
 		Name:    "proxy_upstream_tunnel_connect_seconds",
 		Help:    "Histogram of upstream tunnel connect in seconds",
+		Buckets: []float64{.005, .01, .025, .05, .1, .25, .5, 1, 2},
+	}, []string{"status_code"})
+
+	proxyUpstreamHttp = promauto.NewHistogramVec(prometheus.HistogramOpts{
+		Name:    "proxy_upstream_http_seconds",
+		Help:    "Histogram of upstream HTTP in seconds",
 		Buckets: []float64{.005, .01, .025, .05, .1, .25, .5, 1, 2},
 	}, []string{"status_code"})
 
@@ -104,7 +115,8 @@ func NewProxy(pac string, ip string, detected bool) *proxy {
 func transfer(destination io.WriteCloser, source io.ReadCloser) {
 	defer destination.Close()
 	defer source.Close()
-	io.Copy(destination, source)
+	written, _ := io.Copy(destination, source)
+	totalBytes.Add(float64(written))
 }
 
 func GetUpstreamStatus(status string) (bool, string, string) {
@@ -194,14 +206,16 @@ func (p *proxy) LookupProxy(url url.URL) string {
 		log.Printf(`LookupProxy: got value from cache = %v`, cacheValue)
 		return string(cacheValue)
 	}
-	result = RunWpadPac(p.Pac, p.Ip, urlString, host)
+	result, cacheable := RunWpadPac(p.Pac, p.Ip, urlString, host)
 	proxyaddress, err := GetProxyAddress(result)
 	if err != nil {
 		log.Printf(`LookupProxy: see above, error getting proxy address, will go direct`)
 		return "DIRECT"
 	} else {
-		log.Printf(`LookupProxy: returning %v`, proxyaddress)
-		p.cache.AddVal(urlhash, []byte(proxyaddress))
+		log.Printf(`LookupProxy: returning %v, cacheable = %v`, proxyaddress, cacheable)
+		if cacheable {
+			p.cache.AddVal(urlhash, []byte(proxyaddress))
+		}
 		return proxyaddress
 	}
 }
@@ -302,14 +316,16 @@ func (p *proxy) ServeHTTP(wr http.ResponseWriter, req *http.Request) {
 
 		delHopHeaders(req.Header)
 
-		/*if clientIP, _, err := net.SplitHostPort(req.RemoteAddr); err == nil {
+		if clientIP, _, err := net.SplitHostPort(req.RemoteAddr); err == nil {
 			appendHostToXForwardHeader(req.Header, clientIP)
-		}*/
+		}
 
+		http_start := time.Now()
 		resp, err := client.Do(req)
+		http_duration := time.Since(http_start)
+		proxyUpstreamHttp.WithLabelValues(fmt.Sprint(resp.StatusCode)).Observe(http_duration.Seconds())
 		if err != nil {
 			http.Error(wr, "Server Error", http.StatusInternalServerError)
-			//log.Fatal("ServeHTTP:", err)
 		}
 		defer resp.Body.Close()
 
@@ -319,7 +335,9 @@ func (p *proxy) ServeHTTP(wr http.ResponseWriter, req *http.Request) {
 
 		copyHeader(wr.Header(), resp.Header)
 		wr.WriteHeader(resp.StatusCode)
-		io.Copy(wr, resp.Body)
+		written, _ := io.Copy(wr, resp.Body)
+		totalBytes.Add(float64(written))
+
 	}
 	duration := time.Since(start)
 	proxyServeTimeHistogram.WithLabelValues(target).Observe(duration.Seconds())

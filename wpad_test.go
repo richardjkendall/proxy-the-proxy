@@ -17,7 +17,7 @@ func TestPacMyIpAddress(t *testing.T) {
 		return myIpAddress();
 	}
 	`
-	result := RunWpadPac(pac, ip, "", "")
+	result, _ := RunWpadPac(pac, ip, "", "")
 	if result != ip {
 		t.Fatalf(`IP came back as %v, want %v`, result, ip)
 	}
@@ -33,7 +33,7 @@ func TestPacIsNotPlainHostName(t *testing.T) {
 		}
 	}
 	`
-	result := RunWpadPac(pac, "", "", "")
+	result, _ := RunWpadPac(pac, "", "", "")
 	if result != "false" {
 		t.Fatalf(`Check for isPlainHostName match came back as true, want false`)
 	}
@@ -49,7 +49,7 @@ func TestPacIsPlainHostName(t *testing.T) {
 		}
 	}
 	`
-	result := RunWpadPac(pac, "", "", "")
+	result, _ := RunWpadPac(pac, "", "", "")
 	if result != "true" {
 		t.Fatalf(`Check for isPlainHostName match came back as false, want true`)
 	}
@@ -65,7 +65,7 @@ func TestPacIsPlainHostNameInvalidCall(t *testing.T) {
 		}
 	}
 	`
-	result := RunWpadPac(pac, "", "", "")
+	result, _ := RunWpadPac(pac, "", "", "")
 	if result != "false" {
 		t.Fatalf(`Check for isPlainHostName match came back as true, want false`)
 	}
@@ -81,7 +81,7 @@ func TestPacDnsDomainIs(t *testing.T) {
 		}
 	}
 	`
-	result := RunWpadPac(pac, "", "", "")
+	result, _ := RunWpadPac(pac, "", "", "")
 	if result != "true" {
 		t.Fatalf(`Domain match came back as false, want true`)
 	}
@@ -97,7 +97,7 @@ func TestPacDnsDomainIsNot(t *testing.T) {
 		}
 	}
 	`
-	result := RunWpadPac(pac, "", "", "")
+	result, _ := RunWpadPac(pac, "", "", "")
 	if result != "false" {
 		t.Fatalf(`Domain match came back as true, want false`)
 	}
@@ -109,7 +109,7 @@ func TestPacDnsDomainIsInvalidCall(t *testing.T) {
 		return dnsDomainIs() ? "true" : "false";
 	}
 	`
-	result := RunWpadPac(pac, "", "", "")
+	result, _ := RunWpadPac(pac, "", "", "")
 	if result != "false" {
 		t.Fatalf(`Domain match came back as true, want false`)
 	}
@@ -125,7 +125,7 @@ func TestPacDnsLocalHostOrDomainIsExact(t *testing.T) {
 		}
 	}
 	`
-	result := RunWpadPac(pac, "", "", "")
+	result, _ := RunWpadPac(pac, "", "", "")
 	if result != "true" {
 		t.Fatalf(`Match came back as false, want true`)
 	}
@@ -141,7 +141,7 @@ func TestPacDnsLocalHostOrDomainIsHostMatch(t *testing.T) {
 		}
 	}
 	`
-	result := RunWpadPac(pac, "", "", "")
+	result, _ := RunWpadPac(pac, "", "", "")
 	if result != "true" {
 		t.Fatalf(`Match came back as false, want true`)
 	}
@@ -157,7 +157,7 @@ func TestPacDnsLocalHostOrDomainIsDomainMismatch(t *testing.T) {
 		}
 	}
 	`
-	result := RunWpadPac(pac, "", "", "")
+	result, _ := RunWpadPac(pac, "", "", "")
 	if result != "false" {
 		t.Fatalf(`Match came back as true, want false`)
 	}
@@ -173,7 +173,7 @@ func TestPacDnsLocalHostOrDomainIsHostMismatch(t *testing.T) {
 		}
 	}
 	`
-	result := RunWpadPac(pac, "", "", "")
+	result, _ := RunWpadPac(pac, "", "", "")
 	if result != "false" {
 		t.Fatalf(`Match came back as true, want false`)
 	}
@@ -189,7 +189,7 @@ func TestPacDnsIsResolvable(t *testing.T) {
 		}
 	}
 	`
-	result := RunWpadPac(pac, "", "", "")
+	result, _ := RunWpadPac(pac, "", "", "")
 	if result != "true" {
 		t.Fatalf(`Match came back as false, want true`)
 	}
@@ -205,7 +205,7 @@ func TestPacDnsIsNotResolvable(t *testing.T) {
 		}
 	}
 	`
-	result := RunWpadPac(pac, "", "", "")
+	result, _ := RunWpadPac(pac, "", "", "")
 	if result != "false" {
 		t.Fatalf(`Match came back as true, want false`)
 	}
@@ -221,7 +221,7 @@ func TestPacDnsIsResolvableInvalidCall(t *testing.T) {
 		}
 	}
 	`
-	result := RunWpadPac(pac, "", "", "")
+	result, _ := RunWpadPac(pac, "", "", "")
 	if result != "false" {
 		t.Fatalf(`Match came back as true, want false`)
 	}
@@ -237,7 +237,7 @@ func TestPacDnsIsInNet(t *testing.T) {
 		}
 	}
 	`
-	result := RunWpadPac(pac, "", "", "")
+	result, _ := RunWpadPac(pac, "", "", "")
 	if result != "true" {
 		t.Fatalf(`Match came back as false, want true`)
 	}
@@ -253,7 +253,7 @@ func TestPacDnsIsNotInNet(t *testing.T) {
 		}
 	}
 	`
-	result := RunWpadPac(pac, "", "", "")
+	result, _ := RunWpadPac(pac, "", "", "")
 	if result != "false" {
 		t.Fatalf(`Match came back as true, want false`)
 	}
@@ -269,7 +269,7 @@ func TestPacDnsIsInNetInvalidCall(t *testing.T) {
 		}
 	}
 	`
-	result := RunWpadPac(pac, "", "", "")
+	result, _ := RunWpadPac(pac, "", "", "")
 	if result != "false" {
 		t.Fatalf(`Match came back as true, want false`)
 	}
@@ -285,7 +285,7 @@ func TestPacDnsIsInNetInvalidCall2(t *testing.T) {
 		}
 	}
 	`
-	result := RunWpadPac(pac, "", "", "")
+	result, _ := RunWpadPac(pac, "", "", "")
 	if result != "false" {
 		t.Fatalf(`Match came back as true, want false`)
 	}
@@ -297,7 +297,7 @@ func TestPacConvertAddr(t *testing.T) {
 		return convert_addr("104.16.41.2") == 1745889538 ? "true" : "false";
 	}
 	`
-	result := RunWpadPac(pac, "", "", "")
+	result, _ := RunWpadPac(pac, "", "", "")
 	if result != "true" {
 		t.Fatalf(`Match came back as false, want true`)
 	}
@@ -309,7 +309,7 @@ func TestPacConvertAddrInvalidIp(t *testing.T) {
 		return convert_addr("300.16.41.2") == 0 ? "true" : "false";
 	}
 	`
-	result := RunWpadPac(pac, "", "", "")
+	result, _ := RunWpadPac(pac, "", "", "")
 	if result != "true" {
 		t.Fatalf(`Match came back as false, want true`)
 	}
@@ -321,7 +321,7 @@ func TestPacConvertAddrInvalidCall(t *testing.T) {
 		return convert_addr() == 0 ? "true" : "false";
 	}
 	`
-	result := RunWpadPac(pac, "", "", "")
+	result, _ := RunWpadPac(pac, "", "", "")
 	if result != "true" {
 		t.Fatalf(`Match came back as false, want true`)
 	}
@@ -333,7 +333,7 @@ func TestPacDnsDomainLevels2(t *testing.T) {
 		return dnsDomainLevels("test.test.test") == 2 ? "true" : "false";
 	}
 	`
-	result := RunWpadPac(pac, "", "", "")
+	result, _ := RunWpadPac(pac, "", "", "")
 	if result != "true" {
 		t.Fatalf(`Match came back as false, want true`)
 	}
@@ -345,7 +345,7 @@ func TestPacDnsDomainLevels0(t *testing.T) {
 		return dnsDomainLevels("test") == 0 ? "true" : "false";
 	}
 	`
-	result := RunWpadPac(pac, "", "", "")
+	result, _ := RunWpadPac(pac, "", "", "")
 	if result != "true" {
 		t.Fatalf(`Match came back as false, want true`)
 	}
@@ -357,7 +357,7 @@ func TestPacDnsDomainLevelsInvalidCall(t *testing.T) {
 		return dnsDomainLevels() == 0 ? "true" : "false";
 	}
 	`
-	result := RunWpadPac(pac, "", "", "")
+	result, _ := RunWpadPac(pac, "", "", "")
 	if result != "true" {
 		t.Fatalf(`Match came back as false, want true`)
 	}
@@ -369,7 +369,7 @@ func TestPacShExpMatchWildcardTrue(t *testing.T) {
 		return shExpMatch("http://home.netscape.com/people/ari/index.html", "*/ari/*") ? "true" : "false";
 	}
 	`
-	result := RunWpadPac(pac, "", "", "")
+	result, _ := RunWpadPac(pac, "", "", "")
 	if result != "true" {
 		t.Fatalf(`Match came back as false, want true`)
 	}
@@ -381,7 +381,7 @@ func TestPacShExpMatchWildcardFalse(t *testing.T) {
 		return shExpMatch("http://home.netscape.com/people/montulli/index.html", "*/ari/*") ? "true" : "false";
 	}
 	`
-	result := RunWpadPac(pac, "", "", "")
+	result, _ := RunWpadPac(pac, "", "", "")
 	if result != "false" {
 		t.Fatalf(`Match came back as true, want false`)
 	}
@@ -393,7 +393,7 @@ func TestPacShExpMatchQuestionmarkTrue(t *testing.T) {
 		return shExpMatch("http://home.netscape.com/people/r/index.html", "*/?/*") ? "true" : "false";
 	}
 	`
-	result := RunWpadPac(pac, "", "", "")
+	result, _ := RunWpadPac(pac, "", "", "")
 	if result != "true" {
 		t.Fatalf(`Match came back as false, want true`)
 	}
@@ -405,7 +405,7 @@ func TestPacShExpMatchQuestionmarkFalse(t *testing.T) {
 		return shExpMatch("http://home.netscape.com/people/rr/index.html", "*/?/*") ? "true" : "false";
 	}
 	`
-	result := RunWpadPac(pac, "", "", "")
+	result, _ := RunWpadPac(pac, "", "", "")
 	if result != "false" {
 		t.Fatalf(`Match came back as true, want false`)
 	}
@@ -417,7 +417,7 @@ func TestPacShExpMatchWithDotTrue(t *testing.T) {
 		return shExpMatch("http://home.netscape.com/people/rr/index.html", "*.html") ? "true" : "false";
 	}
 	`
-	result := RunWpadPac(pac, "", "", "")
+	result, _ := RunWpadPac(pac, "", "", "")
 	if result != "true" {
 		t.Fatalf(`Match came back as false, want true`)
 	}
@@ -429,7 +429,7 @@ func TestPacShExpMatchWithDotFalse(t *testing.T) {
 		return shExpMatch("http://home.netscape.com/people/rr/index.html", "*.php") ? "true" : "false";
 	}
 	`
-	result := RunWpadPac(pac, "", "", "")
+	result, _ := RunWpadPac(pac, "", "", "")
 	if result != "false" {
 		t.Fatalf(`Match came back as true, want false`)
 	}
@@ -445,7 +445,7 @@ func TestPacWeekdayRangeTodayMatch(t *testing.T) {
 	}
 	`
 
-	result := RunWpadPac(pac, "", "", "")
+	result, _ := RunWpadPac(pac, "", "", "")
 	if result != "true" {
 		t.Fatalf(`Match came back as false, want true`)
 	}
@@ -461,7 +461,7 @@ func TestPacWeekdayRangeTomorrow(t *testing.T) {
 	}
 	`
 
-	result := RunWpadPac(pac, "", "", "")
+	result, _ := RunWpadPac(pac, "", "", "")
 	if result != "false" {
 		t.Fatalf(`Match came back as true, want false`)
 	}
@@ -477,7 +477,7 @@ func TestPacWeekdayRangeTodayUTCMatch(t *testing.T) {
 	}
 	`
 
-	result := RunWpadPac(pac, "", "", "")
+	result, _ := RunWpadPac(pac, "", "", "")
 	if result != "true" {
 		t.Fatalf(`Match came back as false, want true`)
 	}
@@ -494,7 +494,7 @@ func TestPacWeekdayRangeTodayTomorrowMatch(t *testing.T) {
 	}
 	`
 
-	result := RunWpadPac(pac, "", "", "")
+	result, _ := RunWpadPac(pac, "", "", "")
 	if result != "true" {
 		t.Fatalf(`Match came back as false, want true`)
 	}
@@ -511,7 +511,7 @@ func TestPacWeekdayRangeTodayTomorrowUTCMatch(t *testing.T) {
 	}
 	`
 
-	result := RunWpadPac(pac, "", "", "")
+	result, _ := RunWpadPac(pac, "", "", "")
 	if result != "true" {
 		t.Fatalf(`Match came back as false, want true`)
 	}
@@ -526,7 +526,7 @@ func TestPacDateRangeToday(t *testing.T) {
 	}
 	`
 
-	result := RunWpadPac(pac, "", "", "")
+	result, _ := RunWpadPac(pac, "", "", "")
 	if result != "true" {
 		t.Fatalf(`Match came back as false, want true`)
 	}
@@ -541,7 +541,7 @@ func TestPacDateRangeTodayUTC(t *testing.T) {
 	}
 	`
 
-	result := RunWpadPac(pac, "", "", "")
+	result, _ := RunWpadPac(pac, "", "", "")
 	if result != "true" {
 		t.Fatalf(`Match came back as false, want true`)
 	}
@@ -556,7 +556,7 @@ func TestPacDateRangeCurrentYear(t *testing.T) {
 	}
 	`
 
-	result := RunWpadPac(pac, "", "", "")
+	result, _ := RunWpadPac(pac, "", "", "")
 	if result != "true" {
 		t.Fatalf(`Match came back as false, want true`)
 	}
@@ -572,7 +572,7 @@ func TestPacDateRangeCurrentMonth(t *testing.T) {
 	}
 	`
 
-	result := RunWpadPac(pac, "", "", "")
+	result, _ := RunWpadPac(pac, "", "", "")
 	if result != "true" {
 		t.Fatalf(`Match came back as false, want true`)
 	}
@@ -589,7 +589,7 @@ func TestPacDateRangeDayAndMonth(t *testing.T) {
 	}
 	`
 
-	result := RunWpadPac(pac, "", "", "")
+	result, _ := RunWpadPac(pac, "", "", "")
 	if result != "true" {
 		t.Fatalf(`Match came back as false, want true`)
 	}
@@ -606,7 +606,7 @@ func TestPacDateRangeDayAndMonthGMT(t *testing.T) {
 	}
 	`
 
-	result := RunWpadPac(pac, "", "", "")
+	result, _ := RunWpadPac(pac, "", "", "")
 	if result != "true" {
 		t.Fatalf(`Match came back as false, want true`)
 	}
@@ -623,7 +623,7 @@ func TestPacDateRangeMonthRange(t *testing.T) {
 	}
 	`
 
-	result := RunWpadPac(pac, "", "", "")
+	result, _ := RunWpadPac(pac, "", "", "")
 	if result != "true" {
 		t.Fatalf(`Match came back as false, want true`)
 	}
@@ -640,7 +640,7 @@ func TestPacDateRangeMonthRangeUTC(t *testing.T) {
 	}
 	`
 
-	result := RunWpadPac(pac, "", "", "")
+	result, _ := RunWpadPac(pac, "", "", "")
 	if result != "true" {
 		t.Fatalf(`Match came back as false, want true`)
 	}
@@ -657,7 +657,7 @@ func TestPacDateRangeMonthRangeNoMatch(t *testing.T) {
 	}
 	`
 
-	result := RunWpadPac(pac, "", "", "")
+	result, _ := RunWpadPac(pac, "", "", "")
 	if result != "false" {
 		t.Fatalf(`Match came back as true, want false`)
 	}
@@ -678,7 +678,7 @@ func TestPacDateRangeDayAndMonthRange(t *testing.T) {
 	}
 	`
 
-	result := RunWpadPac(pac, "", "", "")
+	result, _ := RunWpadPac(pac, "", "", "")
 	if result != "true" {
 		t.Fatalf(`Match came back as false, want true`)
 	}
@@ -699,7 +699,7 @@ func TestPacDateRangeDayAndMonthRangeGMT(t *testing.T) {
 	}
 	`
 
-	result := RunWpadPac(pac, "", "", "")
+	result, _ := RunWpadPac(pac, "", "", "")
 	if result != "true" {
 		t.Fatalf(`Match came back as false, want true`)
 	}
@@ -721,7 +721,7 @@ func TestPacDateRangeDayAndMonthRangeNegative(t *testing.T) {
 	}
 	`
 
-	result := RunWpadPac(pac, "", "", "")
+	result, _ := RunWpadPac(pac, "", "", "")
 	if result != "false" {
 		t.Fatalf(`Match came back as true, want false`)
 	}
@@ -736,7 +736,7 @@ func TestPacTimeRangeCurrentHour(t *testing.T) {
 	}
 	`
 
-	result := RunWpadPac(pac, "", "", "")
+	result, _ := RunWpadPac(pac, "", "", "")
 	if result != "true" {
 		t.Fatalf(`Match came back as false, want true`)
 	}
@@ -751,7 +751,7 @@ func TestPacTimeRangeCurrentHourGMT(t *testing.T) {
 	}
 	`
 
-	result := RunWpadPac(pac, "", "", "")
+	result, _ := RunWpadPac(pac, "", "", "")
 	if result != "true" {
 		t.Fatalf(`Match came back as false, want true`)
 	}
@@ -770,7 +770,7 @@ func TestPacTimeRangeCurrentHourRange(t *testing.T) {
 	}
 	`
 
-	result := RunWpadPac(pac, "", "", "")
+	result, _ := RunWpadPac(pac, "", "", "")
 	if result != "true" {
 		t.Fatalf(`Match came back as false, want true`)
 	}
@@ -790,7 +790,7 @@ func TestPacTimeRangeCurrentHourRangeGMT(t *testing.T) {
 	}
 	`
 
-	result := RunWpadPac(pac, "", "", "")
+	result, _ := RunWpadPac(pac, "", "", "")
 	if result != "true" {
 		t.Fatalf(`Match came back as false, want true`)
 	}
@@ -810,7 +810,7 @@ func TestPacTimeRangeCurrentHourMinRange(t *testing.T) {
 	}
 	`
 
-	result := RunWpadPac(pac, "", "", "")
+	result, _ := RunWpadPac(pac, "", "", "")
 	if result != "true" {
 		t.Fatalf(`Match came back as false, want true`)
 	}
@@ -830,7 +830,7 @@ func TestPacTimeRangeCurrentHourMinRangeGMT(t *testing.T) {
 	}
 	`
 
-	result := RunWpadPac(pac, "", "", "")
+	result, _ := RunWpadPac(pac, "", "", "")
 	if result != "true" {
 		t.Fatalf(`Match came back as false, want true`)
 	}

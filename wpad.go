@@ -46,8 +46,9 @@ func GetWpad(host string) (string, error) {
 	return sb, nil
 }
 
-func RunWpadPac(pac string, ipaddress string, url string, host string) string {
+func RunWpadPac(pac string, ipaddress string, url string, host string) (string, bool) {
 	scriptExecutions.Inc()
+	cacheable := true
 	vm := otto.New()
 
 	log.Printf(`RunWpadPac: ip = %v, url = %v, host = %v`, ipaddress, url, host)
@@ -177,6 +178,7 @@ func RunWpadPac(pac string, ipaddress string, url string, host string) string {
 			result, _ := vm.ToValue(false)
 			return result
 		}
+		cacheable = false
 		// handle GMT
 		last, _ := call.Argument(argc - 1).ToString()
 		if last == "GMT" {
@@ -261,6 +263,7 @@ func RunWpadPac(pac string, ipaddress string, url string, host string) string {
 			result, _ := vm.ToValue(false)
 			return result
 		}
+		cacheable = false
 		last, _ := call.Argument(argc - 1).ToString()
 		if last == "GMT" {
 			log.Printf("dateRange: should be using GMT/UTC")
@@ -384,6 +387,7 @@ func RunWpadPac(pac string, ipaddress string, url string, host string) string {
 			result, _ := vm.ToValue(false)
 			return result
 		}
+		cacheable = false
 		// check if the last argument is 'GMT'
 		wday := 0
 		gmt := false
@@ -444,5 +448,5 @@ func RunWpadPac(pac string, ipaddress string, url string, host string) string {
 		log.Fatalln(err)
 	}
 
-	return output_string
+	return output_string, cacheable
 }

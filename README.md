@@ -61,8 +61,19 @@ The management server offers the following endpoints.
 |`/metrics`| `GET` | Prometheus metrics endpoint
 |`/refresh`| `GET` | Refresh the IP address and auto-detected proxy details
 
+### Metrics
+
+As well as the standard Go runtime metrics, the following metrics:
+
+|Metric|Type|What it measures|
+| --- | --- | --- |
+
+
 ## TODO
 
 * Auto-detect network interface changes
 * Support proxy authentication
 * Complete unit test coverage
+* UI for control
+* Add further metrics
+* Improve security by checking WPAD request against the public suffix list

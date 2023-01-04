@@ -133,6 +133,13 @@ func GetUpstreamStatus(status string) (bool, string, string) {
 func ConnectUpstream(endpoint string, host string) (net.Conn, error) {
 	start := time.Now()
 	log.Printf(`ConnectUpstream: connecting to %v for host %v`, endpoint, host)
+	/*
+		Trying to start on instrumenting DNS lookups
+		dialer := &net.Dialer{
+			Resolver: &net.Resolver{
+
+			},
+		}*/
 	conn, err := net.DialTimeout("tcp", endpoint, 10*time.Second)
 	if err != nil {
 		log.Printf(`ConnectUpstream: error connecting: %v`, err)

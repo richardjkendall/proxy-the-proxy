@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"io/ioutil"
 	"log"
@@ -40,6 +41,12 @@ func GetWpad(host string) (string, error) {
 	if err != nil {
 		log.Printf(`GetWpad: error getting response: %v`, err)
 		return "", err
+	}
+
+	// check response code
+	if resp.StatusCode > 299 {
+		log.Printf(`GetWpad: got a non 2xx response code: %v`, resp.StatusCode)
+		return "", errors.New("GetWpad: got a non 2xx response code")
 	}
 
 	sb := string(body)

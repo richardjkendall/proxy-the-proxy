@@ -99,6 +99,10 @@ func main() {
 	myIpAddress := GetOutboundIP()
 	log.Printf("Proxy: My IP address is %s", myIpAddress)
 
+	// Get my search domain
+	mySearchDomain := GetSearchDomain()
+	log.Printf("Proxy: My search domain is: %s", mySearchDomain)
+
 	// get PAC content
 	// make a call to http://wpad
 	detected := true

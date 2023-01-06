@@ -92,10 +92,11 @@ func appendHostToXForwardHeader(header http.Header, host string) {
 }
 
 type proxy struct {
-	Pac      string
-	Ip       string
-	Detected bool
-	cache    *cache
+	Pac          string
+	Ip           string
+	SearchDomain []string
+	Detected     bool
+	cache        *cache
 }
 
 func (p *proxy) UpdateIp(ip string) {
@@ -107,9 +108,9 @@ func (p *proxy) UpdatePac(pac string, detected bool) {
 	p.Detected = detected
 }
 
-func NewProxy(pac string, ip string, detected bool) *proxy {
+func NewProxy(pac string, ip string, searchdomain []string, detected bool) *proxy {
 	c := NewCache()
-	return &proxy{pac, ip, detected, c}
+	return &proxy{pac, ip, searchdomain, detected, c}
 }
 
 func transfer(destination io.WriteCloser, source io.ReadCloser) {

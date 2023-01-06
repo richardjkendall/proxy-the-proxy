@@ -14,7 +14,7 @@ type ResolveConf struct {
 	nameserver []string
 }
 
-func GetSearchDomain() string {
+func GetSearchDomain() []string {
 	domain, err := GetDomainFromHostname()
 	if err != nil {
 		log.Printf(`GetSearchDomain: error getting domain from hostname: %v`, err)
@@ -25,15 +25,21 @@ func GetSearchDomain() string {
 		log.Printf(`GetSearchDomain: response from ReadResolvConf = %v`, resolvconf)
 		if len(resolvconf.search) > 0 {
 			if len(resolvconf.search[0]) > 0 {
-				log.Printf(`GetSearchDomain: using search domain = %s`, resolvconf.search[0][0])
-				return resolvconf.search[0][0]
+				domains := []string{}
+				for _, doms := range resolvconf.search {
+					for _, domain := range doms {
+						domains = append(domains, domain)
+					}
+				}
+				log.Printf(`GetSearchDomain: flattened list of search domains = %v`, domains)
+				return domains
 			}
 		}
 		log.Printf(`GetSearchDomain: returning blank domain`)
-		return ""
+		return []string{}
 	}
 	log.Printf(`GetSearchDomain: returning domain from hostname = %s`, domain)
-	return domain
+	return []string{domain}
 }
 
 func ReadResolvConf() (ResolveConf, error) {

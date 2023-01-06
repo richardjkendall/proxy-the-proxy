@@ -28,9 +28,33 @@ var (
 	})
 )
 
-func GetWpad(host string) (string, error) {
+func GetWpadFqdn(host string, searchdomain []string) string {
+	// need to go through search domains
+	if len(searchdomain) == 0 {
+		log.Printf(`GetWpadFqdn: searchdomain length = 0, returning wpad`)
+		return host
+	} else {
+		for _, domain := range searchdomain {
+			// try to find wpad
+			domainbits := strings.Split(domain, ".")
+			for i := 0; i < len(domainbits); i++ {
+				fqdn := fmt.Sprintf("%s.%s", host, strings.Join(domainbits[i:], "."))
+				log.Printf(`GetWpadFqdn: domain=%s, trying=%s`, domain, fqdn)
+				if PerformDNSLookup(fqdn) != false {
+					return fqdn
+				}
+			}
+		}
+	}
+	return host
+}
+
+func GetWpad(host string, searchdomain []string) (string, error) {
+	// get Wpad domain
+	wpad_domain := GetWpadFqdn(host, searchdomain)
+	log.Printf(`GetWpad: using domain of %s`, wpad_domain)
 	// get PAC file
-	resp, err := http.Get(fmt.Sprintf("http://%s/wpad.dat", host))
+	resp, err := http.Get(fmt.Sprintf("http://%s/wpad.dat", wpad_domain))
 	if err != nil {
 		log.Printf(`GetWpad: error on connection: %v`, err)
 		return "", err

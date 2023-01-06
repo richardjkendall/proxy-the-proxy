@@ -54,8 +54,10 @@ func CreateMgmtServer(port int) *http.Server {
 		global_proxy.UpdateIp(myIpAddress.String())
 		log.Printf("MgmtServer: Refresh, updated IP address")
 
+		global_proxy.SearchDomain = GetSearchDomain()
+
 		detected := true
-		pac, err := GetWpad("wpad")
+		pac, err := GetWpad("wpad", global_proxy.SearchDomain)
 		if err != nil {
 			log.Printf(`MgmtServer: error getting wpad = %v`, err)
 			log.Printf(`MgmtServer: all connections will be direct`)
@@ -106,7 +108,7 @@ func main() {
 	// get PAC content
 	// make a call to http://wpad
 	detected := true
-	pac, err := GetWpad("wpad")
+	pac, err := GetWpad("wpad", mySearchDomain)
 	if err != nil {
 		log.Printf(`Proxy: error getting wpad = %v`, err)
 		log.Printf(`Proxy: all connections will be direct`)
@@ -114,7 +116,7 @@ func main() {
 	}
 
 	// init proxy
-	global_proxy = NewProxy(pac, myIpAddress.String(), detected)
+	global_proxy = NewProxy(pac, myIpAddress.String(), mySearchDomain, detected)
 
 	wg := new(sync.WaitGroup)
 	wg.Add(2)
